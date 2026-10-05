@@ -218,21 +218,6 @@
     text-align: right;
 }
 
-/* Audio popup body */
-.playadapt-audio-popup-body {
-    padding-top: 0.4em;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
-    margin-top: 0.4em;
-}
-
-.playadapt-popup-label {
-    font-size: 0.75em;
-    color: var(--playadapt-text-secondary, rgba(255, 255, 255, 0.6));
-    padding: 0 0.8em 0.3em;
-    text-transform: uppercase;
-    font-weight: 600;
-}
-
 /* Shutter Flash Animation */
 .playadapt-shutter-flash {
     position: fixed;
@@ -556,4 +541,87 @@
     opacity: 1;
     transform: translateX(-50%) translateY(0);
 }
+
+/* ==========================================================================
+   Secondary Subtitle (Dual Subtitle) Container Styles
+   Isolated pure clear-text display in fixed viewport position
+   ========================================================================== */
+
+.playadapt-secondary-sub {
+    position: absolute !important;
+    z-index: 1500 !important;
+    pointer-events: none !important;
+    text-align: center;
+    white-space: pre-wrap;
+    line-height: 1.35;
+    max-width: 85%;
+    font-family: var(--playadapt-font-family, sans-serif);
+    transition: opacity 0.12s ease;
+    user-select: none;
+}
+
+/* Position Variants */
+.playadapt-sub-pos-top {
+    top: 48px !important;
+    bottom: auto !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+}
+
+.playadapt-sub-pos-middle {
+    top: 42% !important;
+    bottom: auto !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+}
+
+.playadapt-sub-pos-above-controls {
+    top: auto !important;
+    bottom: 110px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+}
+
+/* Font Size Variants */
+.playadapt-sub-size-compact {
+    font-size: 1.05em;
+    font-weight: 500;
+}
+
+.playadapt-sub-size-normal {
+    font-size: 1.35em;
+    font-weight: 600;
+}
+
+.playadapt-sub-size-large {
+    font-size: 1.7em;
+    font-weight: 700;
+}
+
+/* Background Style Variants */
+.playadapt-sub-style-frosted-pill {
+    background: rgba(14, 14, 20, 0.78);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+    padding: 0.35em 0.85em;
+    color: #ffffff;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.45);
+}
+
+.playadapt-sub-style-dark-box {
+    background: rgba(0, 0, 0, 0.85);
+    border-radius: 6px;
+    padding: 0.3em 0.75em;
+    color: #ffffff;
+}
+
+.playadapt-sub-style-text-outline {
+    background: transparent;
+    color: #ffffff;
+    text-shadow: 0 0 4px #000, 0 0 6px #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+}
+
 

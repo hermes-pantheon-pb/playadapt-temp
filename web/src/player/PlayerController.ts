@@ -4,6 +4,8 @@
  * media events, rich stream codec inspection, HDR/Dolby Vision flags, and real-time bitrate.
  */
 
+import { SubtitleCue, SubtitleTrackInfo, SubtitleParser } from './SubtitleParser';
+
 export interface DetailedMediaInfo {
     videoCodec: string;
     originalVideoCodec: string;
@@ -93,6 +95,7 @@ export class PlayerController {
     private lastCalculatedBitrateBps: number = 0;
     private lastTransferActivityTime: number = 0;
     private bitrateTrackerInterval: any = null;
+    private cachedSubtitleCues: Map<number, SubtitleCue[]> = new Map();
 
     private constructor() {
         this.hookGlobalEvents();
@@ -168,6 +171,7 @@ export class PlayerController {
             }
 
             this.fetchActiveSession();
+            this.cachedSubtitleCues.clear();
             this.emit('playbackstart', state);
         } else if (type === 'playerchange') {
             // Events.trigger(playbackManagerInstance, 'playerchange', [newPlayer, newTarget, previousPlayer]);
@@ -185,6 +189,7 @@ export class PlayerController {
             this.activeSession = null;
             this.activeMediaSource = null;
             this.activeNowPlayingItem = null;
+            this.cachedSubtitleCues.clear();
             this.emit('playbackstop');
         }
     }
@@ -357,6 +362,106 @@ export class PlayerController {
             console.debug('[PlayAdapt] Session fetch error:', e);
         }
         return this.activeSession;
+    }
+
+    /**
+     * Discovers all available subtitle tracks on the currently playing media item.
+     */
+    public getSubtitleTracks(): SubtitleTrackInfo[] {
+        const pbManager = this.getPlaybackManager();
+        const player = this.activePlayer || (pbManager?.getCurrentPlayer ? pbManager.getCurrentPlayer() : null);
+
+        let mediaStreams: any[] = [];
+        if (this.activeMediaSource?.MediaStreams?.length) {
+            mediaStreams = this.activeMediaSource.MediaStreams;
+        } else if (this.activeNowPlayingItem?.MediaStreams?.length) {
+            mediaStreams = this.activeNowPlayingItem.MediaStreams;
+        } else if (pbManager?.mediaStreams) {
+            try {
+                mediaStreams = pbManager.mediaStreams(player) || [];
+            } catch (e) {}
+        }
+
+        const subStreams = mediaStreams.filter((s: any) => s.Type === 'Subtitle');
+        return subStreams.map((s: any) => ({
+            index: typeof s.Index === 'number' ? s.Index : -1,
+            language: s.Language,
+            title: s.DisplayTitle || s.Title || s.Language || `Track ${s.Index}`,
+            codec: (s.Codec || 'vtt').toLowerCase(),
+            isDefault: s.IsDefault === true,
+            isForced: s.IsForced === true,
+            isExternal: s.IsExternal === true,
+            deliveryUrl: s.DeliveryUrl
+        })).filter((t: SubtitleTrackInfo) => t.index !== -1);
+    }
+
+    /**
+     * Reads the current primary subtitle stream index selected by Jellyfin.
+     * Strictly read-only to ensure we never alter primary subtitle behavior.
+     */
+    public getPrimarySubtitleIndex(): number {
+        const pbManager = this.getPlaybackManager();
+        const player = this.activePlayer || (pbManager?.getCurrentPlayer ? pbManager.getCurrentPlayer() : null);
+        if (pbManager?.getSubtitleStreamIndex) {
+            try {
+                const idx = pbManager.getSubtitleStreamIndex(player);
+                if (typeof idx === 'number') return idx;
+            } catch (e) {}
+        }
+        return -1;
+    }
+
+    /**
+     * Fetches and parses subtitle cues for a secondary subtitle stream cleanly.
+     * Converts to pure clear-text cues via SubtitleParser. Caches per track index.
+     */
+    public async fetchSubtitleCues(trackIndex: number): Promise<SubtitleCue[]> {
+        if (this.cachedSubtitleCues.has(trackIndex)) {
+            return this.cachedSubtitleCues.get(trackIndex)!;
+        }
+
+        const tracks = this.getSubtitleTracks();
+        const track = tracks.find(t => t.index === trackIndex);
+        if (!track) return [];
+
+        let url = track.deliveryUrl || '';
+        const apiClient = (window as any).ApiClient;
+
+        if (!url && apiClient) {
+            const itemId = this.activeNowPlayingItem?.Id || this.activeMediaSource?.ItemId || this.activeSession?.NowPlayingItem?.Id;
+            const mediaSourceId = this.activeMediaSource?.Id;
+            if (itemId && mediaSourceId) {
+                // Jellyfin's Stream.vtt endpoint automatically converts text/SRT/ASS to clean WebVTT
+                if (typeof apiClient.getUrl === 'function') {
+                    url = apiClient.getUrl(`Videos/${itemId}/${mediaSourceId}/Subtitles/${trackIndex}/Stream.vtt`);
+                } else if (typeof apiClient.serverAddress === 'function') {
+                    url = `${apiClient.serverAddress()}/Videos/${itemId}/${mediaSourceId}/Subtitles/${trackIndex}/Stream.vtt`;
+                }
+            }
+        }
+
+        if (!url) return [];
+
+        try {
+            const headers: Record<string, string> = {};
+            if (apiClient?.accessToken?.()) {
+                headers['X-Emby-Token'] = apiClient.accessToken();
+            }
+
+            const res = await fetch(url, { headers });
+            if (!res.ok) {
+                console.warn('[PlayAdapt] Failed to fetch secondary subtitle stream:', res.status);
+                return [];
+            }
+
+            const content = await res.text();
+            const cues = SubtitleParser.parse(content);
+            this.cachedSubtitleCues.set(trackIndex, cues);
+            return cues;
+        } catch (err) {
+            console.error('[PlayAdapt] Error loading subtitle track:', err);
+            return [];
+        }
     }
 
     /**

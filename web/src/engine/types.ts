@@ -34,6 +34,7 @@ export enum AnchorSlot {
     HeaderActions = 'HeaderActions',
     OsdOverlayTopLeft = 'OsdOverlayTopLeft',
     OsdOverlayTopRight = 'OsdOverlayTopRight',
+    OsdOverlayTopCenter = 'OsdOverlayTopCenter',
     OsdOverlayBottom = 'OsdOverlayBottom',
     SecondaryMediaInfo = 'SecondaryMediaInfo',
     VideoViewport = 'VideoViewport',
@@ -102,7 +103,7 @@ export interface AspectMetadata {
     id: string;
     name: string;
     description: string;
-    category: 'playback' | 'visual' | 'audio' | 'utility' | 'information';
+    category: 'playback' | 'visual' | 'audio' | 'subtitles' | 'utility' | 'information';
     defaultEnabled: boolean;
     defaultSlot?: AnchorSlot | string;
     adminOnly?: boolean;

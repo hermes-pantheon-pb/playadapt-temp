@@ -7,8 +7,8 @@
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
     <AssemblyTitle>Jellyfin.Plugin.PlayAdapt</AssemblyTitle>
     <Description>Theme-adaptive player enhancement engine for Jellyfin official client</Description>
-    <Version>1.0.3.0</Version>
-    <FileVersion>1.0.3.0</FileVersion>
+    <Version>1.0.4.0</Version>
+    <FileVersion>1.0.4.0</FileVersion>
     <Company>Antigravity</Company>
   </PropertyGroup>
 

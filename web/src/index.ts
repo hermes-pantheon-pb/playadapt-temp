@@ -11,7 +11,7 @@ import { MediaInfoTagsAspect } from './aspects/builtin/MediaInfoTagsAspect';
 import { PlaybackSpeedAspect } from './aspects/builtin/PlaybackSpeedAspect';
 import { QuickScreenshotAspect } from './aspects/builtin/QuickScreenshotAspect';
 import { StreamStatsAspect } from './aspects/builtin/StreamStatsAspect';
-import { AudioBoostAspect } from './aspects/builtin/AudioBoostAspect';
+import { SecondarySubtitleAspect } from './aspects/builtin/SecondarySubtitleAspect';
 
 (function initPlayAdapt() {
     'use strict';
@@ -43,6 +43,7 @@ import { AudioBoostAspect } from './aspects/builtin/AudioBoostAspect';
                     showBitrate: true,
                     showCodec: true,
                     showHdr: true,
+                    showToneMapping: true,
                     showAudio: true,
                     showPlaybackMethod: true,
                     bitrateIntervalMs: 1000,
@@ -68,10 +69,10 @@ import { AudioBoostAspect } from './aspects/builtin/AudioBoostAspect';
                 OptionsJson: JSON.stringify({ refreshIntervalMs: 1000 })
             },
             {
-                Id: 'audio-boost',
+                Id: 'secondary-subtitle',
                 Enabled: true,
                 AdminOnly: false,
-                OptionsJson: JSON.stringify({ maxGain: 2.5 })
+                OptionsJson: JSON.stringify({ defaultPosition: 'top' })
             }
         ]
     };
@@ -123,7 +124,7 @@ import { AudioBoostAspect } from './aspects/builtin/AudioBoostAspect';
         aspectRegistry.register(new PlaybackSpeedAspect());
         aspectRegistry.register(new QuickScreenshotAspect());
         aspectRegistry.register(new StreamStatsAspect());
-        aspectRegistry.register(new AudioBoostAspect());
+        aspectRegistry.register(new SecondarySubtitleAspect());
 
         // Initialize registry with loaded configuration
         aspectRegistry.init(config);

@@ -8,6 +8,14 @@
     "overview": "PlayAdapt dynamically inspects any active Jellyfin theme, anchoring custom player features seamlessly into place with native styling, geometry, and glassmorphism.",
     "versions": [
       {
+        "version": "1.0.4.0",
+        "targetAbi": "10.9.0.0",
+        "sourceUrl": "https://raw.githubusercontent.com/hermes-pantheon-pb/playadapt-temp/main/jellyfin-plugin-playadapt.zip",
+        "checksum": "ad219444ce7c229556a1a12fdc1c5743",
+        "changelog": "v1.0.4.0: Complete removal of all Web Audio API and audio boost capabilities; Added isolated Dual Subtitle (Secondary Subtitle) engine with strict Master Toggle (defaults to OFF), guaranteed zero interference with primary/ASS subtitle rendering, pure clear-text parsing (stripping all ASS/HTML typesetting tags), fixed-place viewport placement (Top Center, Middle, Above Controls), font sizing, and visual styling.",
+        "timestamp": "2026-10-05T19:35:00Z"
+      },
+      {
         "version": "1.0.3.0",
         "targetAbi": "10.9.0.0",
         "sourceUrl": "https://raw.githubusercontent.com/hermes-pantheon-pb/playadapt-temp/main/jellyfin-plugin-playadapt.zip",

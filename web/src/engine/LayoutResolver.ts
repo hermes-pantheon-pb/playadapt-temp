@@ -145,6 +145,7 @@ export class LayoutResolver {
 
             case AnchorSlot.OsdOverlayTopLeft:
             case AnchorSlot.OsdOverlayTopRight:
+            case AnchorSlot.OsdOverlayTopCenter:
             case AnchorSlot.OsdOverlayBottom:
             case AnchorSlot.VideoViewport:
                 return (
@@ -236,6 +237,12 @@ export class LayoutResolver {
                 break;
             }
 
+            case AnchorSlot.OsdOverlayTopCenter: {
+                this.styleAsOverlay(element, 'top-center');
+                container.appendChild(element);
+                break;
+            }
+
             case AnchorSlot.OsdOverlayBottom: {
                 this.styleAsOverlay(element, 'bottom-center');
                 container.appendChild(element);
@@ -258,7 +265,7 @@ export class LayoutResolver {
         }
     }
 
-    private styleAsOverlay(element: HTMLElement, position: 'top-right' | 'top-left' | 'bottom-center'): void {
+    private styleAsOverlay(element: HTMLElement, position: 'top-right' | 'top-left' | 'top-center' | 'bottom-center'): void {
         element.style.position = 'absolute';
         element.style.zIndex = '1000';
         element.style.pointerEvents = 'auto';
@@ -269,6 +276,10 @@ export class LayoutResolver {
         } else if (position === 'top-left') {
             element.style.top = '72px';
             element.style.left = '24px';
+        } else if (position === 'top-center') {
+            element.style.top = '48px';
+            element.style.left = '50%';
+            element.style.transform = 'translateX(-50%)';
         } else if (position === 'bottom-center') {
             element.style.bottom = '120px';
             element.style.left = '50%';
