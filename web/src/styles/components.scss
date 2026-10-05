@@ -421,6 +421,16 @@
     font-size: 0.78em;
 }
 
+.playadapt-tag-tonemap {
+    border-color: rgba(168, 85, 247, 0.45) !important;
+    color: #e9d5ff !important;
+}
+
+.playadapt-tag-tonemap .playadapt-tag-badge {
+    background: linear-gradient(135deg, #a855f7, #6366f1);
+    color: #ffffff;
+}
+
 .playadapt-tag-directplay {
     border-color: rgba(16, 185, 129, 0.4) !important;
     color: #6ee7b7 !important;

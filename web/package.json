@@ -1,6 +1,6 @@
 {
   "name": "jellyfin-plugin-playadapt-web",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "private": true,
   "description": "Theme-adaptive player enhancement engine for Jellyfin official client",
   "scripts": {

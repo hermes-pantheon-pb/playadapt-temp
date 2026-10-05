@@ -17,6 +17,10 @@ export interface DetailedMediaInfo {
     doviTitle?: string;
     colorSpace?: string;
 
+    // Tone Mapping
+    isToneMapping: boolean;
+    toneMappingDetails?: string;
+
     audioCodec: string;
     originalAudioCodec: string;
     targetAudioCodec?: string;
@@ -264,22 +268,18 @@ export class PlayerController {
     }
 
     public getVideo(): HTMLVideoElement | null {
-        if (this.videoElement && document.contains(this.videoElement)) {
+        if (this.videoElement && document.contains(this.videoElement) && this.videoElement.videoWidth > 0) {
             return this.videoElement;
         }
 
-        const video = document.querySelector('video.htmlvideoplayer, video') as HTMLVideoElement;
-        if (video) {
-            this.videoElement = video;
-            // Ensure crossOrigin is set for lossless canvas reads if allowed by server
-            if (!video.crossOrigin) {
-                try {
-                    video.crossOrigin = 'anonymous';
-                } catch (e) {
-                    // Ignore
-                }
-            }
-            this.attachVideoListeners(video);
+        const videos = Array.from(document.querySelectorAll('video')) as HTMLVideoElement[];
+        const activeVideo = videos.find(v => v.videoWidth > 0 && !v.paused) ||
+                            videos.find(v => v.videoWidth > 0) ||
+                            (document.querySelector('video.htmlvideoplayer, video') as HTMLVideoElement);
+
+        if (activeVideo) {
+            this.videoElement = activeVideo;
+            this.attachVideoListeners(activeVideo);
         }
         return this.videoElement;
     }
@@ -361,6 +361,7 @@ export class PlayerController {
 
     /**
      * Captures the current video frame cleanly as a lossless or compressed image without any OSD.
+     * Uses native canvas toBlob and generates a Blob URL for full Firefox/Linux compatibility.
      */
     public async captureCurrentFrame(options: { format?: string; quality?: number } = {}): Promise<{
         blob: Blob;
@@ -393,7 +394,7 @@ export class PlayerController {
                         return;
                     }
                     try {
-                        const dataUrl = canvas.toDataURL(format, quality);
+                        const dataUrl = URL.createObjectURL(blob);
                         resolve({
                             blob,
                             dataUrl,
@@ -657,6 +658,18 @@ export class PlayerController {
         const networkBitrateBps = this.lastCalculatedBitrateBps;
         const realtimeBitrateBps = networkBitrateBps > 0 ? networkBitrateBps : 0;
 
+        // Tone Mapping Detection
+        // Active when HDR source media is being transcoded down, or when explicitly flagged in transcode reasons
+        const hasHdrSource = isHdr || (videoStream.VideoRangeType && videoStream.VideoRangeType !== 'SDR') || (videoStream.VideoRange === 'HDR');
+        const isVideoTranscoding = !isVideoDirect || playbackMethod === 'Transcode';
+        const reasonsContainRange = transcodeReason ? (transcodeReason.includes('Range') || transcodeReason.includes('ColorSpace')) : false;
+
+        const isToneMapping = hasHdrSource && (isVideoTranscoding || reasonsContainRange);
+        let toneMappingDetails = '';
+        if (isToneMapping) {
+            toneMappingDetails = hardwareAcceleration ? `${hardwareAcceleration} Tone Mapping` : 'Tone Mapping';
+        }
+
         return {
             videoCodec,
             originalVideoCodec: originalVideoCodec || 'Video',
@@ -669,6 +682,8 @@ export class PlayerController {
             hdrFlags,
             doviTitle,
             colorSpace,
+            isToneMapping,
+            toneMappingDetails: isToneMapping ? toneMappingDetails : undefined,
             audioCodec,
             originalAudioCodec: originalAudioCodec || 'Audio',
             targetAudioCodec: targetAudioCodec || undefined,

@@ -83,13 +83,21 @@ export class QuickScreenshotAspect implements PlayerAspect {
                 }
             }
 
-            // 2. Download file
+            // 2. Download file via Blob URL (compatible with Firefox Linux, Chrome, Edge, Safari)
+            const blobUrl = URL.createObjectURL(result.blob);
             const a = document.createElement('a');
-            a.href = result.dataUrl;
+            a.style.display = 'none';
+            a.href = blobUrl;
             a.download = filename;
             document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
+            a.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
+
+            setTimeout(() => {
+                if (a.parentElement) {
+                    a.parentElement.removeChild(a);
+                }
+                URL.revokeObjectURL(blobUrl);
+            }, 3000);
 
             // 3. Inform user with toast
             context.factory.showToast(copied ? '📸 Screenshot saved & copied to clipboard!' : '📸 Screenshot saved!');

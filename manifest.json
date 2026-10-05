@@ -8,6 +8,14 @@
     "overview": "PlayAdapt dynamically inspects any active Jellyfin theme, anchoring custom player features seamlessly into place with native styling, geometry, and glassmorphism.",
     "versions": [
       {
+        "version": "1.0.3.0",
+        "targetAbi": "10.9.0.0",
+        "sourceUrl": "https://raw.githubusercontent.com/hermes-pantheon-pb/playadapt-temp/main/jellyfin-plugin-playadapt.zip",
+        "checksum": "5d132f6291b148fce342af56a026b225",
+        "changelog": "v1.0.3.0: Fixed screenshot capture & file download on Firefox Linux (replaced restricted data URIs with Blob URLs and dispatchEvent); Added dynamic HDR Tone Mapping badge (e.g., Tone Map QSV) when HDR media is transcoded to SDR; Added Tone Mapping toggle in floating tags menu.",
+        "timestamp": "2026-10-05T19:15:00Z"
+      },
+      {
         "version": "1.0.2.0",
         "targetAbi": "10.9.0.0",
         "sourceUrl": "https://raw.githubusercontent.com/hermes-pantheon-pb/playadapt-temp/main/jellyfin-plugin-playadapt.zip",

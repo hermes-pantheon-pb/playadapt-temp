@@ -7,6 +7,7 @@ interface UserPreferences {
     bitrateMode: 'stream' | 'network';
     showCodec: boolean;
     showHdr: boolean;
+    showToneMapping: boolean;
     showAudio: boolean;
     showPlaybackMethod: boolean;
     style: 'glass-pills' | 'glow-badges' | 'compact-minimal';
@@ -77,6 +78,7 @@ export class MediaInfoTagsAspect implements PlayerAspect {
                     bitrateMode: parsed.bitrateMode === 'network' ? 'network' : 'stream',
                     showCodec: parsed.showCodec ?? true,
                     showHdr: parsed.showHdr ?? true,
+                    showToneMapping: parsed.showToneMapping ?? true,
                     showAudio: parsed.showAudio ?? true,
                     showPlaybackMethod: parsed.showPlaybackMethod ?? true,
                     style: parsed.style || 'glass-pills',
@@ -93,6 +95,7 @@ export class MediaInfoTagsAspect implements PlayerAspect {
             bitrateMode: 'stream',
             showCodec: true,
             showHdr: true,
+            showToneMapping: true,
             showAudio: true,
             showPlaybackMethod: true,
             style: 'glass-pills',
@@ -212,6 +215,19 @@ export class MediaInfoTagsAspect implements PlayerAspect {
                     </span>
                 `);
             }
+        }
+
+        // B2. HDR Tone Mapping Tag (indicates when HDR is converted to SDR)
+        if (this.userPrefs.showToneMapping && (context.options.showToneMapping !== false) && info.isToneMapping) {
+            const tmText = info.hardwareAcceleration ? `Tone Map (${info.hardwareAcceleration})` : 'Tone Map';
+            const tmTitle = info.toneMappingDetails ? `${info.toneMappingDetails}: HDR converted to SDR` : 'HDR to SDR Tone Mapping active';
+
+            htmlParts.push(`
+                <span class="playadapt-tag playadapt-tag-tonemap" title="${tmTitle}">
+                    <span class="playadapt-tag-badge">TM</span>
+                    <span class="playadapt-tag-text">${tmText}</span>
+                </span>
+            `);
         }
 
         // C. Audio Codec & Channels Tag (Shows conversion arrow if transcoding)
@@ -374,6 +390,17 @@ export class MediaInfoTagsAspect implements PlayerAspect {
                     selected: this.userPrefs.showHdr,
                     onClick: () => {
                         this.userPrefs.showHdr = !this.userPrefs.showHdr;
+                        this.saveUserPreferences();
+                        this.updateTags(context);
+                    }
+                },
+                {
+                    id: 'toggle_tonemap',
+                    label: 'HDR Tone Mapping Tag',
+                    icon: 'hdr_auto',
+                    selected: this.userPrefs.showToneMapping,
+                    onClick: () => {
+                        this.userPrefs.showToneMapping = !this.userPrefs.showToneMapping;
                         this.saveUserPreferences();
                         this.updateTags(context);
                     }
