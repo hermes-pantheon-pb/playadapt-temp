@@ -6,6 +6,9 @@
 
 export interface DetailedMediaInfo {
     videoCodec: string;
+    originalVideoCodec: string;
+    targetVideoCodec?: string;
+    isVideoDirect: boolean;
     videoProfile?: string;
     resolutionText: string;
     bitDepthText?: string;
@@ -13,17 +16,59 @@ export interface DetailedMediaInfo {
     hdrFlags: string[];
     doviTitle?: string;
     colorSpace?: string;
+
     audioCodec: string;
+    originalAudioCodec: string;
+    targetAudioCodec?: string;
+    isAudioDirect: boolean;
     audioProfile?: string;
     audioChannelsText: string;
+
     playbackMethod: 'Direct Play' | 'Direct Stream' | 'Transcode';
+    transcodeScope: 'None' | 'Audio' | 'Video' | 'All';
     transcodeReason?: string;
     hardwareAcceleration?: string;
     container?: string;
+
     nominalBitrateBps: number;
+    streamBitrateBps: number;
+    networkBitrateBps: number;
     realtimeBitrateBps: number;
     formattedRealtimeBitrate: string;
+    formattedStreamBitrate: string;
 }
+
+export function normalizeVideoCodec(raw?: string): string {
+    if (!raw) return '';
+    const upper = raw.toUpperCase().trim();
+    if (upper === 'H264' || upper === 'AVC') return 'H.264';
+    if (upper === 'HEVC' || upper === 'H265') return 'HEVC';
+    if (upper === 'AV01' || upper === 'AV1') return 'AV1';
+    if (upper === 'VP09' || upper === 'VP9') return 'VP9';
+    if (upper === 'VP8') return 'VP8';
+    if (upper === 'VC1' || upper === 'VC-1') return 'VC-1';
+    if (upper === 'MPEG2VIDEO' || upper === 'MPEG2') return 'MPEG-2';
+    if (upper === 'MPEG4') return 'MPEG-4';
+    return upper;
+}
+
+export function normalizeAudioCodec(raw?: string): string {
+    if (!raw) return '';
+    const upper = raw.toUpperCase().trim();
+    if (upper === 'OPUS') return 'OPUS';
+    if (upper === 'FLAC') return 'FLAC';
+    if (upper === 'TRUEHD') return 'Dolby TrueHD';
+    if (upper === 'EAC3') return 'E-AC-3';
+    if (upper === 'AC3') return 'AC-3';
+    if (upper === 'DCA' || upper === 'DTS') return 'DTS';
+    if (upper === 'VORBIS') return 'Vorbis';
+    if (upper === 'MP3') return 'MP3';
+    if (upper === 'AAC') return 'AAC';
+    if (upper === 'ALAC') return 'ALAC';
+    if (upper === 'WAV' || upper === 'PCM') return 'PCM';
+    return upper;
+}
+
 
 export class PlayerController {
     private static instance: PlayerController;
@@ -42,9 +87,8 @@ export class PlayerController {
     private lastResourceIndex: number = 0;
     private transferSamples: Array<{ timestamp: number; bytes: number }> = [];
     private lastCalculatedBitrateBps: number = 0;
+    private lastTransferActivityTime: number = 0;
     private bitrateTrackerInterval: any = null;
-    private lastBufferedTime: number = 0;
-    private lastBufferCheckTime: number = 0;
 
     private constructor() {
         this.hookGlobalEvents();
@@ -216,6 +260,7 @@ export class PlayerController {
     private recordTransferBytes(bytes: number): void {
         const now = Date.now();
         this.transferSamples.push({ timestamp: now, bytes });
+        this.lastTransferActivityTime = now;
     }
 
     public getVideo(): HTMLVideoElement | null {
@@ -400,9 +445,41 @@ export class PlayerController {
             nowPlayingItem = player._currentPlayOptions.item;
         }
 
-        // 3. Resolve Session & Transcoding info
+        // 3. Resolve MediaStreams from MediaSource, Item, or playbackManager
+        let mediaStreams: any[] = [];
+        if (mediaSource?.MediaStreams?.length) {
+            mediaStreams = mediaSource.MediaStreams;
+        } else if (nowPlayingItem?.MediaStreams?.length) {
+            mediaStreams = nowPlayingItem.MediaStreams;
+        } else if (pbManager?.mediaStreams) {
+            try {
+                mediaStreams = pbManager.mediaStreams(player) || [];
+            } catch (e) {
+                // Ignore
+            }
+        }
+
+        const videoStream = mediaStreams.find((s: any) => s.Type === 'Video') || {};
+
+        // 4. Resolve TranscodingInfo from Session, playbackManager, or player
         const session = this.activeSession;
-        const transcodeInfo = session?.TranscodingInfo;
+        let transcodeInfo = session?.TranscodingInfo;
+        if (!transcodeInfo && pbManager?.getTranscodingInfo) {
+            try {
+                transcodeInfo = pbManager.getTranscodingInfo(player);
+            } catch (e) {}
+        }
+        if (!transcodeInfo && player?.getTranscodingInfo) {
+            try {
+                transcodeInfo = player.getTranscodingInfo();
+            } catch (e) {}
+        }
+        if (!transcodeInfo && player?._transcodingInfo) {
+            transcodeInfo = player._transcodingInfo;
+        }
+        if (!transcodeInfo && player?._currentPlayOptions?.transcodingInfo) {
+            transcodeInfo = player._currentPlayOptions.transcodingInfo;
+        }
 
         // Video stream resolution text
         const width = video?.videoWidth || 0;
@@ -418,40 +495,29 @@ export class PlayerController {
             resolutionText = '720p HD';
         } else if (width > 0 && height > 0) {
             resolutionText = `${width}x${height}`;
-        } else if (mediaSource?.MediaStreams) {
-            const vStream = mediaSource.MediaStreams.find((s: any) => s.Type === 'Video');
-            if (vStream?.Width && vStream?.Height) {
-                if (vStream.Width >= 3800 || vStream.Height >= 2100) resolutionText = '4K UHD';
-                else if (vStream.Width >= 1800 || vStream.Height >= 1000) resolutionText = '1080p FHD';
-                else if (vStream.Width >= 1200 || vStream.Height >= 700) resolutionText = '720p HD';
-                else resolutionText = `${vStream.Width}x${vStream.Height}`;
-            }
+        } else if (videoStream.Width && videoStream.Height) {
+            if (videoStream.Width >= 3800 || videoStream.Height >= 2100) resolutionText = '4K UHD';
+            else if (videoStream.Width >= 1800 || videoStream.Height >= 1000) resolutionText = '1080p FHD';
+            else if (videoStream.Width >= 1200 || videoStream.Height >= 700) resolutionText = '720p HD';
+            else resolutionText = `${videoStream.Width}x${videoStream.Height}`;
         }
 
-        const mediaStreams = mediaSource?.MediaStreams || nowPlayingItem?.MediaStreams || [];
-        const videoStream = mediaStreams.find((s: any) => s.Type === 'Video') || {};
+        // Video Codec Resolution (Original vs Target)
+        const originalVideoCodec = normalizeVideoCodec(videoStream.Codec || videoStream.codec);
+        let targetVideoCodec = normalizeVideoCodec(transcodeInfo?.VideoCodec);
 
-        // 4. Video Codec
-        let rawVideoCodec = transcodeInfo?.VideoCodec || videoStream.Codec;
-        let videoCodec = '';
-        if (rawVideoCodec) {
-            const upper = rawVideoCodec.toUpperCase();
-            if (upper === 'H264' || upper === 'AVC') videoCodec = 'AVC / H.264';
-            else if (upper === 'HEVC' || upper === 'H265') videoCodec = 'HEVC / H.265';
-            else if (upper === 'AV01' || upper === 'AV1') videoCodec = 'AV1';
-            else if (upper === 'VP09' || upper === 'VP9') videoCodec = 'VP9';
-            else if (upper === 'VP8') videoCodec = 'VP8';
-            else videoCodec = upper;
-        } else if (video && video.videoWidth > 0) {
-            videoCodec = 'Video';
-        } else {
-            videoCodec = 'Stream';
+        const srcUrl = video?.src || mediaSource?.TranscodingUrl || '';
+        if (!targetVideoCodec && srcUrl) {
+            const vMatch = srcUrl.match(/[?&]VideoCodec=([^&]+)/i);
+            if (vMatch) {
+                targetVideoCodec = normalizeVideoCodec(decodeURIComponent(vMatch[1]).split(',')[0]);
+            }
         }
 
         // Bit Depth
         const bitDepth = videoStream.BitDepth ? `${videoStream.BitDepth}-bit` : undefined;
 
-        // 5. HDR & Special Video Flags
+        // HDR & Special Video Flags
         const hdrFlags: string[] = [];
         let isHdr = false;
         let doviTitle: string | undefined = undefined;
@@ -488,49 +554,31 @@ export class PlayerController {
             else if (cs.includes('dci') || cs.includes('p3')) colorSpace = 'DCI-P3';
         }
 
-        // 6. Audio Codec & Channels
+        // Audio Codec Resolution (Original vs Target)
         const audioStreamIndex = pbManager?.getAudioStreamIndex ? pbManager.getAudioStreamIndex(player) : -1;
         const audioTracks = pbManager?.audioTracks ? pbManager.audioTracks(player) : [];
         const audioStream = audioTracks.find((s: any) => s.Index === audioStreamIndex) ||
                             mediaStreams.find((s: any) => s.Type === 'Audio') || {};
 
-        let rawAudioCodec = transcodeInfo?.AudioCodec || audioStream.Codec || '';
-        let audioProfile = audioStream.Profile || undefined;
-        let audioCodec = '';
+        const originalAudioCodec = normalizeAudioCodec(audioStream.Codec || audioStream.codec);
+        let targetAudioCodec = normalizeAudioCodec(transcodeInfo?.AudioCodec);
+        if (!targetAudioCodec && srcUrl) {
+            const aMatch = srcUrl.match(/[?&]AudioCodec=([^&]+)/i);
+            if (aMatch) {
+                targetAudioCodec = normalizeAudioCodec(decodeURIComponent(aMatch[1]).split(',')[0]);
+            }
+        }
 
-        if (rawAudioCodec) {
-            const upper = rawAudioCodec.toUpperCase();
-            if (upper === 'OPUS') {
-                audioCodec = 'OPUS';
-            } else if (upper === 'FLAC') {
-                audioCodec = 'FLAC';
-            } else if (upper === 'TRUEHD') {
-                audioCodec = 'Dolby TrueHD';
-                if (audioProfile?.toLowerCase().includes('atmos') || videoStream.Title?.includes('Atmos')) {
-                    audioProfile = 'Atmos';
-                }
-            } else if (upper === 'EAC3') {
-                audioCodec = 'E-AC-3';
-                if (audioProfile?.toLowerCase().includes('atmos') || audioStream.Title?.includes('Atmos')) {
-                    audioProfile = 'Atmos';
-                }
-            } else if (upper === 'AC3') {
-                audioCodec = 'AC-3';
-            } else if (upper === 'DCA' || upper === 'DTS') {
-                audioCodec = 'DTS';
-                if (audioProfile?.includes('MA') || audioProfile?.includes('Master')) {
-                    audioCodec = 'DTS-HD MA';
-                } else if (audioProfile?.includes('X')) {
-                    audioCodec = 'DTS:X';
-                }
-            } else if (upper === 'VORBIS') {
-                audioCodec = 'Vorbis';
-            } else if (upper === 'MP3') {
-                audioCodec = 'MP3';
-            } else if (upper === 'AAC') {
-                audioCodec = 'AAC';
-            } else {
-                audioCodec = upper;
+        let audioProfile = audioStream.Profile || undefined;
+        if (originalAudioCodec === 'Dolby TrueHD' && (audioProfile?.toLowerCase().includes('atmos') || videoStream.Title?.includes('Atmos') || audioStream.Title?.includes('Atmos'))) {
+            audioProfile = 'Atmos';
+        } else if (originalAudioCodec === 'E-AC-3' && (audioProfile?.toLowerCase().includes('atmos') || audioStream.Title?.includes('Atmos'))) {
+            audioProfile = 'Atmos';
+        } else if (originalAudioCodec === 'DTS') {
+            if (audioProfile?.includes('MA') || audioProfile?.includes('Master')) {
+                audioProfile = 'HD-MA';
+            } else if (audioProfile?.includes('X')) {
+                audioProfile = 'DTS:X';
             }
         }
 
@@ -548,36 +596,72 @@ export class PlayerController {
             audioChannelsText = audioStream.ChannelLayout;
         }
 
-        // 7. Playback Method & Transcoding Info
-        let playbackMethod: 'Direct Play' | 'Direct Stream' | 'Transcode' = 'Direct Play';
-        let transcodeReason: string | undefined = undefined;
-        let hardwareAcceleration: string | undefined = undefined;
+        // Playback Method & Direct Stream / Transcoding Breakdown
+        const playMethodStr = pbManager?.getPlaybackMethod ? pbManager.getPlaybackMethod(player) : (session?.PlayState?.PlayMethod || null);
+        let isVideoDirect = true;
+        let isAudioDirect = true;
+        let hardwareAcceleration = transcodeInfo?.HardwareAccelerationType ? transcodeInfo.HardwareAccelerationType.toUpperCase() : undefined;
+        let transcodeReason = (transcodeInfo?.TranscodeReasons && transcodeInfo.TranscodeReasons.length) ? transcodeInfo.TranscodeReasons.join(', ') : undefined;
 
-        const playMethodStr = pbManager?.getPlaybackMethod ? pbManager.getPlaybackMethod(player) : null;
-        if (playMethodStr === 'Transcode' || transcodeInfo) {
-            playbackMethod = 'Transcode';
-            if (transcodeInfo) {
-                if (transcodeInfo.TranscodeReasons && transcodeInfo.TranscodeReasons.length) {
-                    transcodeReason = transcodeInfo.TranscodeReasons.join(', ');
-                }
-                if (transcodeInfo.HardwareAccelerationType) {
-                    hardwareAcceleration = transcodeInfo.HardwareAccelerationType.toUpperCase();
-                }
+        if (transcodeInfo) {
+            if (typeof transcodeInfo.IsVideoDirect === 'boolean') {
+                isVideoDirect = transcodeInfo.IsVideoDirect;
+            } else if (transcodeInfo.VideoCodec && originalVideoCodec) {
+                isVideoDirect = targetVideoCodec === originalVideoCodec;
             }
-        } else if (playMethodStr === 'DirectStream' || (video?.src && video.src.includes('Static=true'))) {
-            playbackMethod = 'Direct Stream';
-        } else if (video?.src && video.src.includes('/master.m3u8')) {
-            playbackMethod = 'Transcode';
+
+            if (typeof transcodeInfo.IsAudioDirect === 'boolean') {
+                isAudioDirect = transcodeInfo.IsAudioDirect;
+            } else if (transcodeInfo.AudioCodec && originalAudioCodec) {
+                isAudioDirect = targetAudioCodec === originalAudioCodec;
+            }
+        } else if (playMethodStr === 'DirectStream') {
+            isVideoDirect = true;
+            isAudioDirect = false;
+        } else if (playMethodStr === 'Transcode' || srcUrl.includes('/master.m3u8')) {
+            isVideoDirect = false;
+            isAudioDirect = false;
         }
 
-        // 8. Bitrate Metrics
-        const nominalBitrateBps = transcodeInfo?.Bitrate || mediaSource?.Bitrate || videoStream.BitRate || 0;
-        const realtimeBitrateBps = this.lastCalculatedBitrateBps > 0
-            ? this.lastCalculatedBitrateBps
-            : nominalBitrateBps;
+        let playbackMethod: 'Direct Play' | 'Direct Stream' | 'Transcode' = 'Direct Play';
+        let transcodeScope: 'None' | 'Audio' | 'Video' | 'All' = 'None';
+
+        if (!isVideoDirect && !isAudioDirect) {
+            playbackMethod = 'Transcode';
+            transcodeScope = 'All';
+        } else if (!isVideoDirect && isAudioDirect) {
+            playbackMethod = 'Transcode';
+            transcodeScope = 'Video';
+        } else if (isVideoDirect && !isAudioDirect) {
+            playbackMethod = 'Direct Stream';
+            transcodeScope = 'Audio';
+        } else {
+            if (playMethodStr === 'DirectStream' || srcUrl.includes('Static=true')) {
+                playbackMethod = 'Direct Stream';
+                transcodeScope = 'None';
+            } else {
+                playbackMethod = 'Direct Play';
+                transcodeScope = 'None';
+            }
+        }
+
+        const videoCodec = targetVideoCodec && !isVideoDirect && targetVideoCodec !== originalVideoCodec
+            ? targetVideoCodec
+            : (originalVideoCodec || 'Video');
+        const audioCodec = targetAudioCodec && !isAudioDirect && targetAudioCodec !== originalAudioCodec
+            ? targetAudioCodec
+            : (originalAudioCodec || 'Audio');
+
+        // Bitrate Metrics: nominal stream bitrate vs live network throughput
+        const streamBitrateBps = transcodeInfo?.Bitrate || mediaSource?.Bitrate || (videoStream.BitRate ? videoStream.BitRate + (audioStream.BitRate || 0) : 0);
+        const networkBitrateBps = this.lastCalculatedBitrateBps;
+        const realtimeBitrateBps = networkBitrateBps > 0 ? networkBitrateBps : 0;
 
         return {
             videoCodec,
+            originalVideoCodec: originalVideoCodec || 'Video',
+            targetVideoCodec: targetVideoCodec || undefined,
+            isVideoDirect,
             videoProfile: videoStream.Profile,
             resolutionText,
             bitDepthText: bitDepth,
@@ -586,15 +670,22 @@ export class PlayerController {
             doviTitle,
             colorSpace,
             audioCodec,
+            originalAudioCodec: originalAudioCodec || 'Audio',
+            targetAudioCodec: targetAudioCodec || undefined,
+            isAudioDirect,
             audioProfile,
             audioChannelsText,
             playbackMethod,
+            transcodeScope,
             transcodeReason,
             hardwareAcceleration,
             container: (mediaSource?.Container || 'MKV').toUpperCase(),
-            nominalBitrateBps,
+            nominalBitrateBps: streamBitrateBps,
+            streamBitrateBps,
+            networkBitrateBps,
             realtimeBitrateBps,
-            formattedRealtimeBitrate: this.formatBitrate(realtimeBitrateBps)
+            formattedRealtimeBitrate: this.formatBitrate(networkBitrateBps),
+            formattedStreamBitrate: this.formatBitrate(streamBitrateBps)
         };
     }
 
@@ -707,71 +798,59 @@ export class PlayerController {
 
     /**
      * Real-time network throughput and bitrate calculation:
-     * Combines:
-     * 1. HLS.js bandwidth estimates
-     * 2. Intercepted fetch / XHR media segment chunk arrivals
-     * 3. PerformanceResourceTiming transferSize deltas
-     * 4. Media buffer advancement progression multiplied by nominal stream bitrate
+     * 1. Inspects PerformanceResourceTiming transferSize deltas for media segments.
+     * 2. Smooths active chunk arrivals using a rolling window and EMA clamp.
+     * 3. Decays to 0.0 Mbps when idle/buffered so the counter never freezes on buffer bursts.
      */
     private startBitrateTracker(): void {
         if (this.bitrateTrackerInterval) return;
 
         this.bitrateTrackerInterval = setInterval(() => {
             const now = Date.now();
-            const player = this.activePlayer || (window as any).playbackManager?.getCurrentPlayer?.();
+            const video = this.getVideo();
 
-            // 1. Check HLS.js bandwidth estimate if present
-            const hls = (window as any).hls || player?.hls || player?._hls || player?._hlsPlayer;
-            if (hls && typeof hls.bandwidthEstimate === 'number' && hls.bandwidthEstimate > 0) {
-                this.lastCalculatedBitrateBps = Math.round(hls.bandwidthEstimate);
-                return;
+            // Refresh active session periodically during playback so transcode info stays live
+            if (video && !video.paused && (now - this.lastSessionFetchTime > 3500)) {
+                this.fetchActiveSession();
             }
 
-            // 2. Measure network resource timing for video chunks/streams
+            // 1. Process performance resource timings
             if (window.performance && performance.getEntriesByType) {
                 const entries = performance.getEntriesByType('resource') as PerformanceResourceTiming[];
                 for (let i = this.lastResourceIndex; i < entries.length; i++) {
                     const entry = entries[i];
                     if (entry.transferSize > 0 && this.isMediaUrl(entry.name)) {
                         this.transferSamples.push({ timestamp: now, bytes: entry.transferSize });
+                        this.lastTransferActivityTime = now;
                     }
                 }
                 this.lastResourceIndex = entries.length;
             }
 
-            // 3. Keep samples within a 4-second sliding window
-            this.transferSamples = this.transferSamples.filter(s => now - s.timestamp <= 4000);
+            // 2. Keep samples within a 2.5-second sliding window
+            this.transferSamples = this.transferSamples.filter(s => now - s.timestamp <= 2500);
 
+            // 3. Compute live network throughput
             if (this.transferSamples.length > 0) {
                 const totalBytes = this.transferSamples.reduce((acc, s) => acc + s.bytes, 0);
                 const oldest = this.transferSamples[0].timestamp;
-                const durationSec = Math.max(0.6, (now - oldest) / 1000);
-                this.lastCalculatedBitrateBps = Math.round((totalBytes * 8) / durationSec);
-                return;
-            }
+                const windowSec = Math.max(1.0, (now - oldest) / 1000);
+                const rawBps = Math.round((totalBytes * 8) / windowSec);
 
-            // 4. Fallback: buffer advancement estimation
-            const video = this.getVideo();
-            if (video && video.buffered.length > 0) {
-                let maxEnd = 0;
-                for (let i = 0; i < video.buffered.length; i++) {
-                    if (video.currentTime >= video.buffered.start(i) && video.currentTime <= video.buffered.end(i)) {
-                        maxEnd = video.buffered.end(i);
-                        break;
-                    }
-                }
+                // Clamp excessive spikes from local cache or chunk batches (max 120 Mbps)
+                const clampedBps = Math.min(rawBps, 120000000);
 
-                if (this.lastBufferCheckTime > 0 && maxEnd > this.lastBufferedTime) {
-                    const bufferedDeltaSeconds = maxEnd - this.lastBufferedTime;
-                    const timeDeltaSec = (now - this.lastBufferCheckTime) / 1000;
-                    if (timeDeltaSec > 0.5 && bufferedDeltaSeconds > 0) {
-                        const nominalBitrate = this.activeMediaSource?.Bitrate || 4000000;
-                        const throughputEstimate = (bufferedDeltaSeconds / timeDeltaSec) * nominalBitrate;
-                        this.lastCalculatedBitrateBps = Math.round(throughputEstimate);
-                    }
+                if (this.lastCalculatedBitrateBps > 0) {
+                    this.lastCalculatedBitrateBps = Math.round(this.lastCalculatedBitrateBps * 0.35 + clampedBps * 0.65);
+                } else {
+                    this.lastCalculatedBitrateBps = clampedBps;
                 }
-                this.lastBufferedTime = maxEnd;
-                this.lastBufferCheckTime = now;
+            } else {
+                // If no transfer activity occurred in the last 2 seconds:
+                // Decays to 0 bps so the display shows 0.0 Mbps when idle/buffered
+                if (now - this.lastTransferActivityTime > 2000) {
+                    this.lastCalculatedBitrateBps = 0;
+                }
             }
         }, 1000);
     }

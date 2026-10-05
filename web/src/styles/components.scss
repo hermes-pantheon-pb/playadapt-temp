@@ -436,6 +436,28 @@
     color: #fcd34d !important;
 }
 
+.playadapt-tag-transcoded {
+    border-color: rgba(245, 158, 11, 0.35) !important;
+}
+
+.playadapt-transcode-arrow {
+    display: inline-block;
+    margin: 0 0.35em;
+    color: var(--playadapt-accent, #00a4dc);
+    font-size: 0.85em;
+    font-weight: 800;
+    vertical-align: middle;
+}
+
+.playadapt-codec-orig {
+    opacity: 0.75;
+}
+
+.playadapt-codec-target {
+    font-weight: 700;
+    color: #ffffff;
+}
+
 .playadapt-dot {
     width: 6px;
     height: 6px;
@@ -471,6 +493,17 @@
     display: inline-block;
     animation: playadapt-pulse 1.8s infinite ease-in-out;
 }
+
+.playadapt-bitrate-idle {
+    animation: none !important;
+    opacity: 0.35;
+    box-shadow: none !important;
+}
+
+.playadapt-bitrate-stream {
+    color: var(--playadapt-accent, #00a4dc);
+}
+
 
 .playadapt-dock-settings-btn {
     background: transparent;

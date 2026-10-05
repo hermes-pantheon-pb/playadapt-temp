@@ -4,6 +4,7 @@ import { DetailedMediaInfo } from '../../player/PlayerController';
 
 interface UserPreferences {
     showBitrate: boolean;
+    bitrateMode: 'stream' | 'network';
     showCodec: boolean;
     showHdr: boolean;
     showAudio: boolean;
@@ -70,7 +71,18 @@ export class MediaInfoTagsAspect implements PlayerAspect {
         try {
             const raw = localStorage.getItem(STORAGE_KEY);
             if (raw) {
-                return JSON.parse(raw);
+                const parsed = JSON.parse(raw);
+                return {
+                    showBitrate: parsed.showBitrate ?? true,
+                    bitrateMode: parsed.bitrateMode === 'network' ? 'network' : 'stream',
+                    showCodec: parsed.showCodec ?? true,
+                    showHdr: parsed.showHdr ?? true,
+                    showAudio: parsed.showAudio ?? true,
+                    showPlaybackMethod: parsed.showPlaybackMethod ?? true,
+                    style: parsed.style || 'glass-pills',
+                    bitrateUnit: parsed.bitrateUnit || 'Mbps',
+                    positionOverride: parsed.positionOverride
+                };
             }
         } catch (e) {
             // Ignore parse errors
@@ -78,6 +90,7 @@ export class MediaInfoTagsAspect implements PlayerAspect {
 
         return {
             showBitrate: true,
+            bitrateMode: 'stream',
             showCodec: true,
             showHdr: true,
             showAudio: true,
@@ -147,20 +160,31 @@ export class MediaInfoTagsAspect implements PlayerAspect {
         const info: DetailedMediaInfo = context.player.getDetailedMediaInfo();
         const htmlParts: string[] = [];
 
-        // A. Video Codec & Resolution Tag
+        // A. Video Codec & Resolution Tag (Shows conversion arrow if transcoding)
         if (this.userPrefs.showCodec && (context.options.showCodec !== false)) {
-            let codecLabel = info.videoCodec;
-            if (info.resolutionText) {
-                codecLabel += ` · ${info.resolutionText}`;
-            }
-            if (info.bitDepthText) {
-                codecLabel += ` · ${info.bitDepthText}`;
+            const isTranscodingVideo = !info.isVideoDirect && !!info.targetVideoCodec && info.originalVideoCodec !== info.targetVideoCodec;
+            let codecHtml = '';
+
+            if (isTranscodingVideo) {
+                codecHtml = `<span class="playadapt-codec-orig">${info.originalVideoCodec}</span><span class="playadapt-transcode-arrow">➔</span><span class="playadapt-codec-target">${info.targetVideoCodec}</span>`;
+            } else {
+                codecHtml = `<span class="playadapt-codec-target">${info.originalVideoCodec || info.videoCodec}</span>`;
             }
 
+            if (info.resolutionText) {
+                codecHtml += ` · ${info.resolutionText}`;
+            }
+            if (info.bitDepthText) {
+                codecHtml += ` · ${info.bitDepthText}`;
+            }
+
+            const transcodeClass = isTranscodingVideo ? ' playadapt-tag-transcoded' : '';
+            const transcodeTitle = isTranscodingVideo ? `Video Transcoding: ${info.originalVideoCodec} converted to ${info.targetVideoCodec}` : '';
+
             htmlParts.push(`
-                <span class="playadapt-tag playadapt-tag-codec">
+                <span class="playadapt-tag playadapt-tag-codec${transcodeClass}" ${transcodeTitle ? `title="${transcodeTitle}"` : ''}>
                     <span class="material-icons playadapt-tag-icon">movie</span>
-                    <span class="playadapt-tag-text">${codecLabel}</span>
+                    <span class="playadapt-tag-text">${codecHtml}</span>
                 </span>
             `);
         }
@@ -190,41 +214,68 @@ export class MediaInfoTagsAspect implements PlayerAspect {
             }
         }
 
-        // C. Audio Codec & Channels Tag
-        if (this.userPrefs.showAudio && (context.options.showAudio !== false) && info.audioCodec) {
-            let audioLabel = info.audioCodec;
-            if (info.audioProfile) {
-                audioLabel = `${info.audioCodec} (${info.audioProfile})`;
-            }
-            if (info.audioChannelsText) {
-                audioLabel += ` · ${info.audioChannelsText}`;
+        // C. Audio Codec & Channels Tag (Shows conversion arrow if transcoding)
+        if (this.userPrefs.showAudio && (context.options.showAudio !== false) && (info.audioCodec || info.originalAudioCodec)) {
+            const isTranscodingAudio = !info.isAudioDirect && !!info.targetAudioCodec && info.originalAudioCodec !== info.targetAudioCodec;
+            let audioHtml = '';
+
+            if (isTranscodingAudio) {
+                audioHtml = `<span class="playadapt-codec-orig">${info.originalAudioCodec}</span><span class="playadapt-transcode-arrow">➔</span><span class="playadapt-codec-target">${info.targetAudioCodec}</span>`;
+            } else {
+                audioHtml = `<span class="playadapt-codec-target">${info.originalAudioCodec || info.audioCodec}</span>`;
+                if (info.audioProfile) {
+                    audioHtml += ` (${info.audioProfile})`;
+                }
             }
 
+            if (info.audioChannelsText) {
+                audioHtml += ` · ${info.audioChannelsText}`;
+            }
+
+            const transcodeClass = isTranscodingAudio ? ' playadapt-tag-transcoded' : '';
+            const transcodeTitle = isTranscodingAudio ? `Audio Transcoding: ${info.originalAudioCodec} converted to ${info.targetAudioCodec}` : '';
+
             htmlParts.push(`
-                <span class="playadapt-tag playadapt-tag-audio">
+                <span class="playadapt-tag playadapt-tag-audio${transcodeClass}" ${transcodeTitle ? `title="${transcodeTitle}"` : ''}>
                     <span class="material-icons playadapt-tag-icon">audiotrack</span>
-                    <span class="playadapt-tag-text">${audioLabel}</span>
+                    <span class="playadapt-tag-text">${audioHtml}</span>
                 </span>
             `);
         }
 
-        // D. Playback Method Tag (Direct Play / Direct Stream / Transcode)
+        // D. Playback Method Tag (Direct Play / Direct Stream / Transcode breakdown)
         if (this.userPrefs.showPlaybackMethod && (context.options.showPlaybackMethod !== false)) {
             let methodClass = 'playadapt-tag-directplay';
             let label: string = info.playbackMethod;
             let tooltip = '';
+            const hwText = info.hardwareAcceleration ? ` (${info.hardwareAcceleration})` : '';
 
             if (info.playbackMethod === 'Direct Stream') {
                 methodClass = 'playadapt-tag-directstream';
+                if (info.transcodeScope === 'Audio') {
+                    label = `Direct Stream · Audio${hwText}`;
+                    tooltip = `Direct Streaming: Video is direct, only audio is transcoding${hwText}`;
+                } else {
+                    label = `Direct Stream`;
+                    tooltip = 'Direct Streaming: Container remuxed, video and audio are direct';
+                }
             } else if (info.playbackMethod === 'Transcode') {
                 methodClass = 'playadapt-tag-transcode';
-                if (info.transcodeReason && context.options.allowTranscodeDetailsNonAdmin !== false) {
-                    tooltip = `Transcode: ${info.transcodeReason}`;
-                    if (info.hardwareAcceleration) {
-                        tooltip += ` (${info.hardwareAcceleration})`;
-                    }
-                    label = `Transcode · ${info.hardwareAcceleration || 'Software'}`;
+                if (info.transcodeScope === 'Video') {
+                    label = `Transcode · Video${hwText}`;
+                    tooltip = `Transcoding: Video is being converted${hwText}, audio is direct`;
+                } else if (info.transcodeScope === 'All') {
+                    label = `Transcode · A+V${hwText}`;
+                    tooltip = `Transcoding: Both video and audio are being converted${hwText}`;
+                } else {
+                    label = `Transcode${hwText}`;
+                    tooltip = `Transcoding${hwText}`;
                 }
+                if (info.transcodeReason && context.options.allowTranscodeDetailsNonAdmin !== false) {
+                    tooltip += ` · Reason: ${info.transcodeReason}`;
+                }
+            } else {
+                tooltip = 'Direct Play: Video and audio are played directly without modification';
             }
 
             htmlParts.push(`
@@ -235,12 +286,26 @@ export class MediaInfoTagsAspect implements PlayerAspect {
             `);
         }
 
-        // E. Realtime Bitrate Tag
+        // E. Realtime / Stream Bitrate Tag
         if (this.userPrefs.showBitrate && (context.options.showBitrate !== false)) {
-            const formatted = context.player.formatBitrate(info.realtimeBitrateBps, this.userPrefs.bitrateUnit);
+            const isStreamMode = this.userPrefs.bitrateMode === 'stream';
+            const bps = isStreamMode ? info.streamBitrateBps : info.networkBitrateBps;
+            const formatted = context.player.formatBitrate(bps, this.userPrefs.bitrateUnit);
+            const isIdle = !isStreamMode && bps === 0;
+
+            const pulseClass = isStreamMode
+                ? 'playadapt-bitrate-stream'
+                : (isIdle ? 'playadapt-bitrate-pulse playadapt-bitrate-idle' : 'playadapt-bitrate-pulse');
+            const iconOrDot = isStreamMode
+                ? `<span class="material-icons playadapt-tag-icon" style="font-size: 13px !important; color: var(--playadapt-accent, #00a4dc);">speed</span>`
+                : `<span class="${pulseClass}"></span>`;
+            const tooltip = isStreamMode
+                ? `Stream Bitrate: ${formatted} (Nominal encoded stream bitrate)`
+                : `Network Throughput: ${formatted} (${isIdle ? 'Idle / buffered' : 'Active chunk transfer'})`;
+
             htmlParts.push(`
-                <span class="playadapt-tag playadapt-tag-bitrate">
-                    <span class="playadapt-bitrate-pulse"></span>
+                <span class="playadapt-tag playadapt-tag-bitrate" title="${tooltip}">
+                    ${iconOrDot}
                     <span class="playadapt-tag-text">${formatted}</span>
                 </span>
             `);
@@ -271,11 +336,22 @@ export class MediaInfoTagsAspect implements PlayerAspect {
             items: () => [
                 {
                     id: 'toggle_bitrate',
-                    label: 'Realtime Bitrate Tag',
+                    label: 'Bitrate Tag',
                     icon: 'speed',
                     selected: this.userPrefs.showBitrate,
                     onClick: () => {
                         this.userPrefs.showBitrate = !this.userPrefs.showBitrate;
+                        this.saveUserPreferences();
+                        this.updateTags(context);
+                    }
+                },
+                {
+                    id: 'bitrate_mode_cycle',
+                    label: `Bitrate Source: ${this.userPrefs.bitrateMode === 'stream' ? 'Stream Bitrate' : 'Network (0 when idle)'}`,
+                    icon: 'wifi_tethering',
+                    badge: this.userPrefs.bitrateMode === 'stream' ? 'Stream' : 'Network',
+                    onClick: () => {
+                        this.userPrefs.bitrateMode = this.userPrefs.bitrateMode === 'stream' ? 'network' : 'stream';
                         this.saveUserPreferences();
                         this.updateTags(context);
                     }

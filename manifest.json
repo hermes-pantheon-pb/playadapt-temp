@@ -8,6 +8,14 @@
     "overview": "PlayAdapt dynamically inspects any active Jellyfin theme, anchoring custom player features seamlessly into place with native styling, geometry, and glassmorphism.",
     "versions": [
       {
+        "version": "1.0.2.0",
+        "targetAbi": "10.9.0.0",
+        "sourceUrl": "https://raw.githubusercontent.com/hermes-pantheon-pb/playadapt-temp/main/jellyfin-plugin-playadapt.zip",
+        "checksum": "aec07c5332dd3f2eba25856c2c5a2855",
+        "changelog": "v1.0.2.0: Audio vs Video transcode breakdown (e.g., Direct Stream \u00b7 Audio QSV, Transcode \u00b7 Video, Transcode \u00b7 A+V); Original codec transcode arrow indicator (e.g., HEVC \u2794 H.264 \u00b7 1080p FHD, OPUS \u2794 AAC); Fixed bitrate buffer freezing and spikes (decays to 0.0 Mbps when buffered/idle); New toggle between nominal Stream Bitrate and live Network Activity in tag preferences.",
+        "timestamp": "2026-10-05T18:50:00Z"
+      },
+      {
         "version": "1.0.1.0",
         "targetAbi": "10.9.0.0",
         "sourceUrl": "https://raw.githubusercontent.com/hermes-pantheon-pb/playadapt-temp/main/jellyfin-plugin-playadapt.zip",
