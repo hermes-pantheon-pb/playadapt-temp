@@ -1,0 +1,16 @@
+{
+  "name": "jellyfin-plugin-playadapt-web",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Theme-adaptive player enhancement engine for Jellyfin official client",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "type-check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "sass": "^1.81.0",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.11"
+  }
+}

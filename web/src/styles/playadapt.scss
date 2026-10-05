@@ -1,0 +1,32 @@
+@import './components.scss';
+
+/* PlayAdapt Root & Scoped Utilities */
+.playadapt-root {
+    position: relative;
+    box-sizing: border-box;
+}
+
+/* Injected items transitions */
+.playadapt-injected-item {
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+/* Debug Mode Styles */
+.playadapt-debug-slot {
+    outline: 2px dashed rgba(255, 105, 180, 0.7) !important;
+    position: relative;
+}
+
+.playadapt-debug-slot::after {
+    content: attr(data-playadapt-slot);
+    position: absolute;
+    top: -14px;
+    left: 0;
+    font-size: 10px;
+    background: #ff69b4;
+    color: black;
+    padding: 1px 4px;
+    border-radius: 3px;
+    pointer-events: none;
+    z-index: 9999;
+}

@@ -1,0 +1,11 @@
+{
+  "category": "General",
+  "guid": "f47a61d3-63d1-4475-8025-a134fa96328a",
+  "name": "PlayAdapt",
+  "description": "Theme-adaptive player enhancement engine for Jellyfin official client with zero disk footprint and in-memory injection.",
+  "overview": "PlayAdapt dynamically inspects any active Jellyfin theme, anchoring custom player features seamlessly into place with native styling, geometry, and glassmorphism.",
+  "owner": "Antigravity",
+  "targetAbi": "10.9.0.0",
+  "version": "1.0.0.0",
+  "imagePath": "logo.png"
+}

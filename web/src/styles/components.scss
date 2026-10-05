@@ -1,0 +1,489 @@
+@import './animations.scss';
+
+/* Glassmorphic Surface Primitive */
+.playadapt-glass-surface {
+    background: var(--playadapt-surface-bg, rgba(20, 20, 24, 0.88)) !important;
+    backdrop-filter: blur(var(--playadapt-surface-blur, 20px)) !important;
+    -webkit-backdrop-filter: blur(var(--playadapt-surface-blur, 20px)) !important;
+    border: var(--playadapt-surface-border, 1px solid rgba(255, 255, 255, 0.12)) !important;
+    border-radius: var(--playadapt-radius-surface, 12px) !important;
+    box-shadow: var(--playadapt-surface-shadow, 0 8px 32px rgba(0, 0, 0, 0.5)) !important;
+    font-family: var(--playadapt-font-family, inherit);
+    color: var(--playadapt-text-primary, #ffffff);
+}
+
+/* Themed Button */
+.playadapt-btn {
+    border-radius: var(--playadapt-radius-btn, 50%) !important;
+    transition: background-color 0.2s ease, transform 0.15s ease, color 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    vertical-align: middle;
+    outline: none;
+    position: relative;
+    user-select: none;
+}
+
+.playadapt-btn:hover {
+    transform: scale(1.08);
+}
+
+.playadapt-btn-active {
+    color: var(--playadapt-accent, #00a4dc) !important;
+}
+
+.playadapt-btn-active .material-icons {
+    color: var(--playadapt-accent, #00a4dc) !important;
+}
+
+/* Floating Action Menu / Sheet */
+.playadapt-menu-sheet {
+    position: fixed;
+    z-index: 2500;
+    min-width: 200px;
+    max-width: 320px;
+    padding: 0.6em;
+    animation: playadapt-fade-in 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.playadapt-menu-header {
+    padding: 0.5em 0.8em 0.6em;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    margin-bottom: 0.4em;
+}
+
+.playadapt-menu-title {
+    font-size: 0.85em;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 700;
+    color: var(--playadapt-text-secondary, rgba(255, 255, 255, 0.6));
+}
+
+.playadapt-menu-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2em;
+}
+
+.playadapt-menu-item {
+    background: transparent;
+    border: none;
+    outline: none;
+    display: flex;
+    align-items: center;
+    gap: 0.8em;
+    padding: 0.6em 0.9em;
+    border-radius: 8px;
+    color: var(--playadapt-text-primary, #ffffff);
+    font-size: 0.95em;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
+    width: 100%;
+    text-align: left;
+    box-sizing: border-box;
+}
+
+.playadapt-menu-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
+}
+
+.playadapt-menu-item-selected {
+    background: rgba(255, 255, 255, 0.12);
+    color: var(--playadapt-accent, #00a4dc) !important;
+    font-weight: 600;
+}
+
+.playadapt-menu-item-check {
+    margin-left: auto;
+    font-size: 18px !important;
+    color: var(--playadapt-accent, #00a4dc);
+}
+
+.playadapt-menu-item-icon {
+    font-size: 18px !important;
+    opacity: 0.8;
+}
+
+/* Badge / Chip */
+.playadapt-badge {
+    margin-left: auto;
+    padding: 0.2em 0.6em;
+    font-size: 0.75em;
+    font-weight: 600;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--playadapt-text-primary, #fff);
+}
+
+/* HUD Overlay Card */
+.playadapt-card-hud {
+    padding: 1.1em;
+    min-width: 220px;
+    animation: playadapt-fade-in 0.25s ease-out;
+}
+
+.playadapt-hud-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+    margin-bottom: 0.8em;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding-bottom: 0.5em;
+}
+
+.playadapt-hud-title {
+    font-size: 0.85em;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.playadapt-hud-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.6em 1em;
+    margin-bottom: 0.8em;
+}
+
+.playadapt-hud-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.playadapt-hud-label {
+    font-size: 0.72em;
+    color: var(--playadapt-text-secondary, rgba(255, 255, 255, 0.6));
+    text-transform: uppercase;
+}
+
+.playadapt-hud-value {
+    font-size: 0.9em;
+    font-weight: 600;
+}
+
+.playadapt-hud-meter {
+    height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.playadapt-hud-meter-fill {
+    height: 100%;
+    background: var(--playadapt-accent, #00a4dc);
+    transition: width 0.3s ease;
+}
+
+/* Slider Component */
+.playadapt-slider-container {
+    display: flex;
+    align-items: center;
+    gap: 0.8em;
+    padding: 0.4em 0.8em;
+}
+
+.playadapt-slider {
+    flex: 1;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+    outline: none;
+}
+
+.playadapt-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--playadapt-accent, #00a4dc);
+    cursor: pointer;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.4);
+}
+
+.playadapt-slider-val {
+    font-size: 0.85em;
+    font-weight: 600;
+    min-width: 34px;
+    text-align: right;
+}
+
+/* Audio popup body */
+.playadapt-audio-popup-body {
+    padding-top: 0.4em;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    margin-top: 0.4em;
+}
+
+.playadapt-popup-label {
+    font-size: 0.75em;
+    color: var(--playadapt-text-secondary, rgba(255, 255, 255, 0.6));
+    padding: 0 0.8em 0.3em;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+/* Shutter Flash Animation */
+.playadapt-shutter-flash {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: white;
+    z-index: 99999;
+    pointer-events: none;
+    animation: playadapt-flash 0.3s ease-out forwards;
+}
+
+/* Modal Dialog */
+.playadapt-modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 3000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: playadapt-fade-in 0.2s ease-out;
+}
+
+.playadapt-modal-card {
+    min-width: 320px;
+    max-width: 520px;
+    padding: 1.5em;
+    display: flex;
+    flex-direction: column;
+    gap: 1em;
+}
+
+.playadapt-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.playadapt-modal-header h3 {
+    margin: 0;
+    font-size: 1.2em;
+}
+
+.playadapt-modal-close {
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+}
+
+.playadapt-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.8em;
+}
+
+.playadapt-btn-action {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: none;
+    padding: 0.5em 1em;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.playadapt-btn-primary {
+    background: var(--playadapt-accent, #00a4dc);
+    color: var(--playadapt-accent-contrast, white);
+}
+
+/* ==========================================================================
+   Floating Media Info & Realtime Bitrate Tags Dock
+   ========================================================================== */
+
+.playadapt-tags-dock {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45em;
+    flex-wrap: wrap;
+    z-index: 1200;
+    pointer-events: auto;
+    cursor: pointer;
+    user-select: none;
+    transition: opacity 0.25s ease, transform 0.2s ease;
+}
+
+.playadapt-tags-dock:hover {
+    transform: translateY(-1px);
+}
+
+.playadapt-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    font-family: var(--playadapt-font-family, inherit);
+    white-space: nowrap;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.playadapt-tag-icon {
+    font-size: 14px !important;
+    opacity: 0.8;
+}
+
+.playadapt-tag-badge {
+    padding: 0.1em 0.35em;
+    border-radius: 4px;
+    font-size: 0.75em;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+}
+
+/* Style 1: Frosted Glass Pills (Default) */
+.playadapt-style-glass-pills .playadapt-tag {
+    background: var(--playadapt-surface-bg, rgba(20, 20, 24, 0.85));
+    backdrop-filter: blur(var(--playadapt-surface-blur, 16px));
+    -webkit-backdrop-filter: blur(var(--playadapt-surface-blur, 16px));
+    border: var(--playadapt-surface-border, 1px solid rgba(255, 255, 255, 0.12));
+    border-radius: 20px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+    padding: 0.25em 0.75em;
+    font-size: 0.82em;
+    font-weight: 600;
+    color: var(--playadapt-text-primary, #ffffff);
+}
+
+/* Style 2: Glowing Badges */
+.playadapt-style-glow-badges .playadapt-tag {
+    background: rgba(12, 12, 18, 0.88);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 0 10px rgba(0, 164, 220, 0.25);
+    padding: 0.25em 0.65em;
+    font-size: 0.8em;
+    font-weight: 600;
+    color: #ffffff;
+}
+
+/* Style 3: Compact Minimal */
+.playadapt-style-compact-minimal .playadapt-tag {
+    background: rgba(0, 0, 0, 0.65);
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 0.15em 0.5em;
+    font-size: 0.78em;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* Special Tag Colors & Gradients */
+.playadapt-tag-dovi {
+    border-color: rgba(168, 85, 247, 0.4) !important;
+}
+
+.playadapt-tag-dovi .playadapt-tag-badge {
+    background: linear-gradient(135deg, #ec4899, #8b5cf6);
+    color: #ffffff;
+}
+
+.playadapt-tag-hdr {
+    border-color: rgba(245, 158, 11, 0.4) !important;
+}
+
+.playadapt-tag-hdr .playadapt-tag-badge {
+    background: #f59e0b;
+    color: #000000;
+}
+
+.playadapt-tag-hdr10plus {
+    border-color: rgba(234, 179, 8, 0.5) !important;
+}
+
+.playadapt-tag-hdr10plus .playadapt-tag-badge {
+    background: linear-gradient(135deg, #eab308, #f97316);
+    color: #000000;
+}
+
+.playadapt-tag-colorspace {
+    opacity: 0.85;
+    font-size: 0.78em;
+}
+
+.playadapt-tag-directplay {
+    border-color: rgba(16, 185, 129, 0.4) !important;
+    color: #6ee7b7 !important;
+}
+
+.playadapt-tag-directstream {
+    border-color: rgba(14, 165, 233, 0.4) !important;
+    color: #7dd3fc !important;
+}
+
+.playadapt-tag-transcode {
+    border-color: rgba(245, 158, 11, 0.45) !important;
+    color: #fcd34d !important;
+}
+
+.playadapt-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.playadapt-tag-directplay .playadapt-dot {
+    background: #10b981;
+    box-shadow: 0 0 6px #10b981;
+}
+
+.playadapt-tag-directstream .playadapt-dot {
+    background: #0ea5e9;
+    box-shadow: 0 0 6px #0ea5e9;
+}
+
+.playadapt-tag-transcode .playadapt-dot {
+    background: #f59e0b;
+    box-shadow: 0 0 6px #f59e0b;
+}
+
+.playadapt-tag-bitrate {
+    border-color: var(--playadapt-accent, #00a4dc) !important;
+}
+
+.playadapt-bitrate-pulse {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--playadapt-accent, #00a4dc);
+    box-shadow: 0 0 8px var(--playadapt-accent, #00a4dc);
+    display: inline-block;
+    animation: playadapt-pulse 1.8s infinite ease-in-out;
+}
+
+.playadapt-dock-settings-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--playadapt-text-secondary, rgba(255, 255, 255, 0.6));
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px 4px;
+    border-radius: 50%;
+    transition: color 0.15s ease, transform 0.15s ease;
+}
+
+.playadapt-dock-settings-btn:hover {
+    color: #ffffff;
+    transform: rotate(30deg);
+}
+

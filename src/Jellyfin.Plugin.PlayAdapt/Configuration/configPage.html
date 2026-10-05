@@ -1,0 +1,620 @@
+<div id="playAdaptConfigPage" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button,emby-checkbox,emby-select">
+    <style>
+        .playadapt-card {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 1.5em;
+            margin-bottom: 1.5em;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            transition: border-color 0.2s ease, transform 0.2s ease;
+        }
+        .playadapt-card:hover {
+            border-color: rgba(255, 255, 255, 0.16);
+        }
+        .playadapt-header-badge {
+            display: inline-block;
+            padding: 0.2em 0.7em;
+            font-size: 0.75em;
+            font-weight: 600;
+            border-radius: 20px;
+            background: #00a4dc22;
+            color: #00a4dc;
+            border: 1px solid #00a4dc55;
+            margin-left: 0.6em;
+            vertical-align: middle;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .playadapt-aspect-card {
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            border-radius: 10px;
+            padding: 1.2em;
+            margin-bottom: 1em;
+            display: flex;
+            flex-direction: column;
+            gap: 0.8em;
+        }
+        .playadapt-aspect-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            padding-bottom: 0.8em;
+        }
+        .playadapt-aspect-title {
+            font-size: 1.1em;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5em;
+        }
+        .playadapt-aspect-desc {
+            color: rgba(255, 255, 255, 0.65);
+            font-size: 0.9em;
+            line-height: 1.4;
+        }
+        .playadapt-options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1em;
+            margin-top: 0.5em;
+            padding-top: 0.5em;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 8px;
+            padding: 1em;
+        }
+        .playadapt-preview-box {
+            display: flex;
+            align-items: center;
+            gap: 1.5em;
+            padding: 1em;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 8px;
+            border: 1px dashed rgba(255, 255, 255, 0.15);
+        }
+        .playadapt-swatch {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            display: inline-block;
+        }
+    </style>
+
+    <div data-role="content">
+        <div class="content-primary">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5em;">
+                <div>
+                    <h1 style="margin: 0; display: inline-flex; align-items: center;">
+                        PlayAdapt
+                        <span class="playadapt-header-badge">Theme-Adaptive Engine</span>
+                    </h1>
+                    <p style="margin: 0.4em 0 0; color: rgba(255, 255, 255, 0.7);">
+                        Intelligently inspects any active Jellyfin theme, anchoring custom player features seamlessly into place with native styling, geometry, and glassmorphism.
+                    </p>
+                </div>
+            </div>
+
+            <form id="playAdaptConfigForm">
+                <!-- Section 1: Core Engine Settings -->
+                <div class="playadapt-card">
+                    <h2 style="margin-top: 0; font-size: 1.3em;">Core Engine Configuration</h2>
+
+                    <div class="checkboxContainer checkboxContainer-withDescription">
+                        <label class="emby-checkbox-label">
+                            <input is="emby-checkbox" type="checkbox" id="Enabled" name="Enabled" />
+                            <span>Enable PlayAdapt Player Injection</span>
+                        </label>
+                        <div class="fieldDescription checkboxFieldDescription">
+                            Dynamically activates the theme-adaptive player engine in the official web client via in-memory injection.
+                        </div>
+                    </div>
+
+                    <div class="checkboxContainer checkboxContainer-withDescription">
+                        <label class="emby-checkbox-label">
+                            <input is="emby-checkbox" type="checkbox" id="EnableThemeInspection" name="EnableThemeInspection" />
+                            <span>Real-Time Theme Inspection &amp; Style Synthesis</span>
+                        </label>
+                        <div class="fieldDescription checkboxFieldDescription">
+                            Dynamically extracts accent colors, borders, backdrop blur, button curves, and typography from the active theme (e.g. Abyss, UltraChromic, JellyFlix, Default) and automatically skins all injected objects to match.
+                        </div>
+                    </div>
+
+                    <div class="checkboxContainer checkboxContainer-withDescription">
+                        <label class="emby-checkbox-label">
+                            <input is="emby-checkbox" type="checkbox" id="EnableDebugMode" name="EnableDebugMode" />
+                            <span>Enable Diagnostic &amp; Anchor Overlay Mode</span>
+                        </label>
+                        <div class="fieldDescription checkboxFieldDescription">
+                            Logs detailed theme inspection metrics to the browser console and visualizes spatial anchor slots on the player OSD.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 2: Live Theme Inspection Diagnostics -->
+                <div class="playadapt-card">
+                    <h2 style="margin-top: 0; font-size: 1.3em;">Active Theme Diagnostics</h2>
+                    <p style="color: rgba(255, 255, 255, 0.7); font-size: 0.9em; margin-bottom: 1em;">
+                        This shows the styling tokens extracted from your client's active theme:
+                    </p>
+
+                    <div class="playadapt-preview-box">
+                        <div style="display: flex; align-items: center; gap: 0.6em;">
+                            <span id="themeAccentSwatch" class="playadapt-swatch" style="background: #00a4dc;"></span>
+                            <div>
+                                <div style="font-size: 0.8em; color: rgba(255,255,255,0.6);">Accent Color</div>
+                                <strong id="themeAccentVal">#00a4dc</strong>
+                            </div>
+                        </div>
+                        <div style="border-left: 1px solid rgba(255,255,255,0.1); height: 32px;"></div>
+                        <div>
+                            <div style="font-size: 0.8em; color: rgba(255,255,255,0.6);">Button Radius</div>
+                            <strong id="themeRadiusVal">Round (Pill)</strong>
+                        </div>
+                        <div style="border-left: 1px solid rgba(255,255,255,0.1); height: 32px;"></div>
+                        <div>
+                            <div style="font-size: 0.8em; color: rgba(255,255,255,0.6);">Backdrop Blur</div>
+                            <strong id="themeBlurVal">Detected Glass (20px)</strong>
+                        </div>
+                        <div style="margin-left: auto;">
+                            <button is="emby-button" type="button" class="raised" id="btnRefreshDiagnostics" style="font-size: 0.85em;">
+                                <span>Re-Inspect Client</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 3: Player Aspects Directory -->
+                <div class="playadapt-card">
+                    <h2 style="margin-top: 0; font-size: 1.3em; display: flex; align-items: center; justify-content: space-between;">
+                        <span>Player Aspects Directory</span>
+                        <span style="font-size: 0.7em; color: rgba(255,255,255,0.6); font-weight: normal;">Configure individual player features</span>
+                    </h2>
+                    <p style="color: rgba(255,255,255,0.7); font-size: 0.9em; margin-bottom: 1.2em;">
+                        Enable or disable specific features added to the video player. Each aspect dynamically inherits theme appearance and locates its optimal slot.
+                    </p>
+
+                    <!-- Aspect: Media Info & Bitrate Floating Tags -->
+                    <div class="playadapt-aspect-card" data-aspect-id="media-info-tags">
+                        <div class="playadapt-aspect-header">
+                            <div class="playadapt-aspect-title">
+                                <span class="material-icons" style="color: #00e676;">layers</span>
+                                Codec &amp; Realtime Bitrate Floating Tags
+                            </div>
+                            <div style="display: flex; gap: 1.5em; align-items: center;">
+                                <label class="emby-checkbox-label" style="margin: 0;">
+                                    <input is="emby-checkbox" type="checkbox" id="aspect_media-info-tags_adminOnly" />
+                                    <span>Admin Only</span>
+                                </label>
+                                <label class="emby-checkbox-label" style="margin: 0;">
+                                    <input is="emby-checkbox" type="checkbox" id="aspect_media-info-tags_enabled" checked />
+                                    <span>Enabled</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="playadapt-aspect-desc">
+                            Displays adaptive floating tags showing video codec, resolution, special video flags (Dolby Vision, HDR10+, HLG, BT.2020), audio channels, and live bitrate when player elements are active. Clicking tags in the player allows users to toggle tags and styles per session.
+                        </div>
+                        <div class="playadapt-options-grid">
+                            <div class="selectContainer">
+                                <label class="selectLabel selectLabelUnfocused" for="aspect_media-info-tags_slot">Default Anchor Position</label>
+                                <select is="emby-select" id="aspect_media-info-tags_slot">
+                                    <option value="TopLeft">Top Left Viewport (Under Header / Title)</option>
+                                    <option value="TopRight">Top Right Viewport</option>
+                                    <option value="BottomMediaInfo">Inline with Media Info (Above Scrubber)</option>
+                                </select>
+                            </div>
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="aspect_media-info-tags_interval">Bitrate Polling Interval (ms)</label>
+                                <input is="emby-input" type="number" min="200" max="5000" step="100" id="aspect_media-info-tags_interval" value="1000" />
+                            </div>
+                            <div class="checkboxContainer checkboxContainer-withDescription" style="grid-column: 1 / -1;">
+                                <label class="emby-checkbox-label">
+                                    <input is="emby-checkbox" type="checkbox" id="aspect_media-info-tags_transcodeDetails" checked />
+                                    <span>Allow Non-Admins to View Transcoding Details &amp; Reasons</span>
+                                </label>
+                                <div class="fieldDescription checkboxFieldDescription">
+                                    When unchecked, non-admin users only see &quot;Transcoding&quot; without raw reason descriptions or hardware engine info.
+                                </div>
+                            </div>
+                            <div style="grid-column: 1 / -1; display: flex; gap: 1.5em; flex-wrap: wrap; padding-top: 0.5em; border-top: 1px solid rgba(255,255,255,0.06);">
+                                <span style="font-size: 0.85em; font-weight: 600; color: rgba(255,255,255,0.8); width: 100%;">Global Tag Permissions (Admin Policy):</span>
+                                <label class="emby-checkbox-label">
+                                    <input is="emby-checkbox" type="checkbox" id="aspect_media-info-tags_allowBitrate" checked />
+                                    <span>Realtime Bitrate</span>
+                                </label>
+                                <label class="emby-checkbox-label">
+                                    <input is="emby-checkbox" type="checkbox" id="aspect_media-info-tags_allowCodec" checked />
+                                    <span>Video Codec &amp; Resolution</span>
+                                </label>
+                                <label class="emby-checkbox-label">
+                                    <input is="emby-checkbox" type="checkbox" id="aspect_media-info-tags_allowHdr" checked />
+                                    <span>HDR &amp; Special Video Flags</span>
+                                </label>
+                                <label class="emby-checkbox-label">
+                                    <input is="emby-checkbox" type="checkbox" id="aspect_media-info-tags_allowAudio" checked />
+                                    <span>Audio Codec &amp; Channels</span>
+                                </label>
+                                <label class="emby-checkbox-label">
+                                    <input is="emby-checkbox" type="checkbox" id="aspect_media-info-tags_allowMethod" checked />
+                                    <span>Playback Method (Direct/Transcode)</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Aspect: Playback Speed -->
+                    <div class="playadapt-aspect-card" data-aspect-id="playback-speed">
+                        <div class="playadapt-aspect-header">
+                            <div class="playadapt-aspect-title">
+                                <span class="material-icons" style="color: #00a4dc;">speed</span>
+                                Playback Speed Controller
+                            </div>
+                            <div style="display: flex; gap: 1.5em; align-items: center;">
+                                <label class="emby-checkbox-label" style="margin: 0;">
+                                    <input is="emby-checkbox" type="checkbox" id="aspect_playback-speed_adminOnly" />
+                                    <span>Admin Only</span>
+                                </label>
+                                <label class="emby-checkbox-label" style="margin: 0;">
+                                    <input is="emby-checkbox" type="checkbox" id="aspect_playback-speed_enabled" checked />
+                                    <span>Enabled</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="playadapt-aspect-desc">
+                            Adds an adaptive speed selector button and themed popup sheet (0.5x, 0.75x, 1x, 1.25x, 1.5x, 1.75x, 2x, custom). Automatically updates the native video element playback rate without distortion.
+                        </div>
+                        <div class="playadapt-options-grid">
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="aspect_playback-speed_presets">Speed Presets (comma-separated)</label>
+                                <input is="emby-input" type="text" id="aspect_playback-speed_presets" value="0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0" />
+                            </div>
+                            <div class="selectContainer">
+                                <label class="selectLabel selectLabelUnfocused" for="aspect_playback-speed_slot">Anchor Slot</label>
+                                <select is="emby-select" id="aspect_playback-speed_slot">
+                                    <option value="">Auto (Default: SecondaryControlsStart)</option>
+                                    <option value="SecondaryControlsStart">Secondary Controls Start (Next to Subtitles/Audio)</option>
+                                    <option value="SecondaryControlsEnd">Secondary Controls End (Next to Settings)</option>
+                                    <option value="PlaybackControlsRight">Playback Controls Right (Next to Fast Forward)</option>
+                                    <option value="HeaderActions">Header Actions (Top Bar)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Aspect: Quick Screenshot -->
+                    <div class="playadapt-aspect-card" data-aspect-id="quick-screenshot">
+                        <div class="playadapt-aspect-header">
+                            <div class="playadapt-aspect-title">
+                                <span class="material-icons" style="color: #4caf50;">photo_camera</span>
+                                Quick Frame Snapshot
+                            </div>
+                            <div style="display: flex; gap: 1.5em; align-items: center;">
+                                <label class="emby-checkbox-label" style="margin: 0;">
+                                    <input is="emby-checkbox" type="checkbox" id="aspect_quick-screenshot_adminOnly" />
+                                    <span>Admin Only</span>
+                                </label>
+                                <label class="emby-checkbox-label" style="margin: 0;">
+                                    <input is="emby-checkbox" type="checkbox" id="aspect_quick-screenshot_enabled" checked />
+                                    <span>Enabled</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="playadapt-aspect-desc">
+                            Captures clean, full-resolution video screenshots at the current frame without OSD clutter. Offers instant clipboard copy and file download with visual shutter animation.
+                        </div>
+                        <div class="playadapt-options-grid">
+                            <div class="selectContainer">
+                                <label class="selectLabel selectLabelUnfocused" for="aspect_quick-screenshot_format">Image Format</label>
+                                <select is="emby-select" id="aspect_quick-screenshot_format">
+                                    <option value="image/png">PNG (Lossless)</option>
+                                    <option value="image/jpeg">JPEG (Smaller file)</option>
+                                    <option value="image/webp">WebP (Modern compressed)</option>
+                                </select>
+                            </div>
+                            <div class="selectContainer">
+                                <label class="selectLabel selectLabelUnfocused" for="aspect_quick-screenshot_slot">Anchor Slot</label>
+                                <select is="emby-select" id="aspect_quick-screenshot_slot">
+                                    <option value="">Auto (Default: SecondaryControlsEnd)</option>
+                                    <option value="SecondaryControlsEnd">Secondary Controls End (Next to PiP/Fullscreen)</option>
+                                    <option value="HeaderActions">Header Actions (Top Bar)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Aspect: Stream Stats HUD -->
+                    <div class="playadapt-aspect-card" data-aspect-id="stream-stats">
+                        <div class="playadapt-aspect-header">
+                            <div class="playadapt-aspect-title">
+                                <span class="material-icons" style="color: #ff9800;">query_stats</span>
+                                Stream Stats &amp; HUD Overlay
+                            </div>
+                            <div style="display: flex; gap: 1.5em; align-items: center;">
+                                <label class="emby-checkbox-label" style="margin: 0;">
+                                    <input is="emby-checkbox" type="checkbox" id="aspect_stream-stats_adminOnly" />
+                                    <span>Admin Only</span>
+                                </label>
+                                <label class="emby-checkbox-label" style="margin: 0;">
+                                    <input is="emby-checkbox" type="checkbox" id="aspect_stream-stats_enabled" checked />
+                                    <span>Enabled</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="playadapt-aspect-desc">
+                            Shows a sleek, glassmorphic HUD card showing real-time player diagnostics: resolution, video codec, audio channels, buffer health, playback bitrate, and dropped frames.
+                        </div>
+                        <div class="playadapt-options-grid">
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="aspect_stream-stats_interval">HUD Refresh Interval (ms)</label>
+                                <input is="emby-input" type="number" min="200" max="10000" step="100" id="aspect_stream-stats_interval" value="1000" />
+                            </div>
+                            <div class="selectContainer">
+                                <label class="selectLabel selectLabelUnfocused" for="aspect_stream-stats_slot">Anchor Slot</label>
+                                <select is="emby-select" id="aspect_stream-stats_slot">
+                                    <option value="">Auto (Default: OsdOverlayTopRight)</option>
+                                    <option value="OsdOverlayTopRight">HUD Overlay (Top Right Viewport)</option>
+                                    <option value="OsdOverlayTopLeft">HUD Overlay (Top Left Viewport)</option>
+                                    <option value="SecondaryControlsEnd">Button in Control Bar</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Aspect: Audio Boost -->
+                    <div class="playadapt-aspect-card" data-aspect-id="audio-boost">
+                        <div class="playadapt-aspect-header">
+                            <div class="playadapt-aspect-title">
+                                <span class="material-icons" style="color: #e91e63;">graphic_eq</span>
+                                Adaptive Dialogue &amp; Audio Boost
+                            </div>
+                            <div style="display: flex; gap: 1.5em; align-items: center;">
+                                <label class="emby-checkbox-label" style="margin: 0;">
+                                    <input is="emby-checkbox" type="checkbox" id="aspect_audio-boost_adminOnly" />
+                                    <span>Admin Only</span>
+                                </label>
+                                <label class="emby-checkbox-label" style="margin: 0;">
+                                    <input is="emby-checkbox" type="checkbox" id="aspect_audio-boost_enabled" checked />
+                                    <span>Enabled</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="playadapt-aspect-desc">
+                            Utilizes Web Audio API GainNode and DynamicCompressor to safely boost quiet dialogue and normalize loud explosions directly in the browser client.
+                        </div>
+                        <div class="playadapt-options-grid">
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="aspect_audio-boost_gain">Max Gain Multiplier (1.5x - 4.0x)</label>
+                                <input is="emby-input" type="number" min="1.0" max="4.0" step="0.25" id="aspect_audio-boost_gain" value="2.5" />
+                            </div>
+                            <div class="selectContainer">
+                                <label class="selectLabel selectLabelUnfocused" for="aspect_audio-boost_slot">Anchor Slot</label>
+                                <select is="emby-select" id="aspect_audio-boost_slot">
+                                    <option value="">Auto (Default: Next to Volume Control)</option>
+                                    <option value="SecondaryControlsStart">Next to Volume Control</option>
+                                    <option value="SecondaryControlsEnd">Next to Settings</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 4: Custom CSS & Advanced Token Overrides -->
+                <div class="playadapt-card">
+                    <h2 style="margin-top: 0; font-size: 1.3em;">Custom Theme Token Overrides (Optional)</h2>
+                    <p style="color: rgba(255, 255, 255, 0.7); font-size: 0.9em;">
+                        Provide custom CSS variable rules if you want to override synthesized theme values (e.g. <code>--playadapt-accent: #ff4081; --playadapt-blur: 15px;</code>).
+                    </p>
+                    <div class="inputContainer">
+                        <textarea is="emby-input" id="CustomThemeOverrides" name="CustomThemeOverrides" rows="4" style="font-family: monospace; font-size: 0.9em; width: 100%; border-radius: 6px; padding: 0.8em;"></textarea>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div style="margin-top: 2em; display: flex; gap: 1em;">
+                    <button is="emby-button" type="submit" class="raised button-submit block">
+                        <span>Save Configuration</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        (function () {
+            'use strict';
+            var pluginId = 'f47a61d3-63d1-4475-8025-a134fa96328a';
+
+            function updateDiagnostics() {
+                var computed = window.getComputedStyle(document.body);
+                var primaryColor = computed.getPropertyValue('--playadapt-accent') ||
+                                   computed.getPropertyValue('--theme-primary') ||
+                                   computed.getPropertyValue('--accent-color') || '#00a4dc';
+                primaryColor = primaryColor.trim();
+
+                var swatch = document.getElementById('themeAccentSwatch');
+                var val = document.getElementById('themeAccentVal');
+                if (swatch && val) {
+                    swatch.style.backgroundColor = primaryColor;
+                    val.textContent = primaryColor;
+                }
+
+                var blurVal = computed.getPropertyValue('--playadapt-surface-blur') || 'Detected Glass (20px)';
+                var radiusVal = computed.getPropertyValue('--playadapt-radius-btn') || 'Round (Pill)';
+                if (document.getElementById('themeBlurVal')) document.getElementById('themeBlurVal').textContent = blurVal;
+                if (document.getElementById('themeRadiusVal')) document.getElementById('themeRadiusVal').textContent = radiusVal;
+            }
+
+            function loadConfiguration(view) {
+                if (window.Dashboard && Dashboard.showLoadingMsg) {
+                    Dashboard.showLoadingMsg();
+                }
+
+                ApiClient.getPluginConfiguration(pluginId).then(function (config) {
+                    if (view.querySelector('#Enabled')) view.querySelector('#Enabled').checked = config.Enabled !== false;
+                    if (view.querySelector('#EnableThemeInspection')) view.querySelector('#EnableThemeInspection').checked = config.EnableThemeInspection !== false;
+                    if (view.querySelector('#EnableDebugMode')) view.querySelector('#EnableDebugMode').checked = config.EnableDebugMode === true;
+                    if (view.querySelector('#CustomThemeOverrides')) view.querySelector('#CustomThemeOverrides').value = config.CustomThemeOverrides || '';
+
+                    // Load aspect configurations
+                    var aspects = config.Aspects || [];
+                    aspects.forEach(function (asp) {
+                        var enabledEl = view.querySelector('#aspect_' + asp.Id + '_enabled');
+                        var adminEl = view.querySelector('#aspect_' + asp.Id + '_adminOnly');
+                        var slotEl = view.querySelector('#aspect_' + asp.Id + '_slot');
+
+                        if (enabledEl) enabledEl.checked = asp.Enabled !== false;
+                        if (adminEl) adminEl.checked = asp.AdminOnly === true;
+                        if (slotEl && asp.CustomAnchorSlot) slotEl.value = asp.CustomAnchorSlot;
+
+                        try {
+                            var opts = JSON.parse(asp.OptionsJson || '{}');
+                            if (asp.Id === 'media-info-tags') {
+                                if (opts.position && view.querySelector('#aspect_media-info-tags_slot')) view.querySelector('#aspect_media-info-tags_slot').value = opts.position;
+                                if (opts.bitrateIntervalMs && view.querySelector('#aspect_media-info-tags_interval')) view.querySelector('#aspect_media-info-tags_interval').value = opts.bitrateIntervalMs;
+                                if (view.querySelector('#aspect_media-info-tags_transcodeDetails')) view.querySelector('#aspect_media-info-tags_transcodeDetails').checked = opts.allowTranscodeDetailsNonAdmin !== false;
+                                if (view.querySelector('#aspect_media-info-tags_allowBitrate')) view.querySelector('#aspect_media-info-tags_allowBitrate').checked = opts.showBitrate !== false;
+                                if (view.querySelector('#aspect_media-info-tags_allowCodec')) view.querySelector('#aspect_media-info-tags_allowCodec').checked = opts.showCodec !== false;
+                                if (view.querySelector('#aspect_media-info-tags_allowHdr')) view.querySelector('#aspect_media-info-tags_allowHdr').checked = opts.showHdr !== false;
+                                if (view.querySelector('#aspect_media-info-tags_allowAudio')) view.querySelector('#aspect_media-info-tags_allowAudio').checked = opts.showAudio !== false;
+                                if (view.querySelector('#aspect_media-info-tags_allowMethod')) view.querySelector('#aspect_media-info-tags_allowMethod').checked = opts.showPlaybackMethod !== false;
+                            } else if (asp.Id === 'playback-speed' && opts.presets && view.querySelector('#aspect_playback-speed_presets')) {
+                                view.querySelector('#aspect_playback-speed_presets').value = opts.presets.join(', ');
+                            } else if (asp.Id === 'quick-screenshot' && opts.format && view.querySelector('#aspect_quick-screenshot_format')) {
+                                view.querySelector('#aspect_quick-screenshot_format').value = opts.format;
+                            } else if (asp.Id === 'stream-stats' && opts.refreshIntervalMs && view.querySelector('#aspect_stream-stats_interval')) {
+                                view.querySelector('#aspect_stream-stats_interval').value = opts.refreshIntervalMs;
+                            } else if (asp.Id === 'audio-boost' && opts.maxGain && view.querySelector('#aspect_audio-boost_gain')) {
+                                view.querySelector('#aspect_audio-boost_gain').value = opts.maxGain;
+                            }
+                        } catch (e) {
+                            console.error('[PlayAdaptConfig] Failed to parse options for ' + asp.Id, e);
+                        }
+                    });
+
+                    updateDiagnostics();
+
+                    if (window.Dashboard && Dashboard.hideLoadingMsg) {
+                        Dashboard.hideLoadingMsg();
+                    }
+                }).catch(function (e) {
+                    console.error('[PlayAdaptConfig] Error loading configuration:', e);
+                    if (window.Dashboard && Dashboard.hideLoadingMsg) {
+                        Dashboard.hideLoadingMsg();
+                    }
+                });
+            }
+
+            function saveConfiguration(view) {
+                if (window.Dashboard && Dashboard.showLoadingMsg) {
+                    Dashboard.showLoadingMsg();
+                }
+
+                ApiClient.getPluginConfiguration(pluginId).then(function (config) {
+                    config.Enabled = view.querySelector('#Enabled').checked;
+                    config.EnableThemeInspection = view.querySelector('#EnableThemeInspection').checked;
+                    config.EnableDebugMode = view.querySelector('#EnableDebugMode').checked;
+                    config.CustomThemeOverrides = view.querySelector('#CustomThemeOverrides').value || '';
+
+                    // Save aspects
+                    var aspectCards = view.querySelectorAll('.playadapt-aspect-card');
+                    config.Aspects = [];
+
+                    aspectCards.forEach(function (card) {
+                        var id = card.getAttribute('data-aspect-id');
+                        var enabled = card.querySelector('#aspect_' + id + '_enabled')?.checked !== false;
+                        var adminOnly = card.querySelector('#aspect_' + id + '_adminOnly')?.checked === true;
+                        var slot = card.querySelector('#aspect_' + id + '_slot')?.value || '';
+
+                        var options = {};
+                        if (id === 'media-info-tags') {
+                            var pos = card.querySelector('#aspect_media-info-tags_slot')?.value || 'TopLeft';
+                            var interval = parseInt(card.querySelector('#aspect_media-info-tags_interval')?.value, 10) || 1000;
+                            var transcodeDetails = card.querySelector('#aspect_media-info-tags_transcodeDetails')?.checked !== false;
+                            var showBitrate = card.querySelector('#aspect_media-info-tags_allowBitrate')?.checked !== false;
+                            var showCodec = card.querySelector('#aspect_media-info-tags_allowCodec')?.checked !== false;
+                            var showHdr = card.querySelector('#aspect_media-info-tags_allowHdr')?.checked !== false;
+                            var showAudio = card.querySelector('#aspect_media-info-tags_allowAudio')?.checked !== false;
+                            var showMethod = card.querySelector('#aspect_media-info-tags_allowMethod')?.checked !== false;
+
+                            options = {
+                                position: pos,
+                                bitrateIntervalMs: interval,
+                                allowTranscodeDetailsNonAdmin: transcodeDetails,
+                                showBitrate: showBitrate,
+                                showCodec: showCodec,
+                                showHdr: showHdr,
+                                showAudio: showAudio,
+                                showPlaybackMethod: showMethod
+                            };
+                        } else if (id === 'playback-speed') {
+                            var rawPresets = card.querySelector('#aspect_playback-speed_presets')?.value || '';
+                            var presets = rawPresets.split(',').map(function (s) { return parseFloat(s.trim()); }).filter(function (n) { return !isNaN(n) && n > 0; });
+                            options = { presets: presets.length ? presets : [0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0], showCustomInput: true };
+                        } else if (id === 'quick-screenshot') {
+                            var fmt = card.querySelector('#aspect_quick-screenshot_format')?.value || 'image/png';
+                            options = { format: fmt, quality: 0.95, copyToClipboard: true, downloadFile: true };
+                        } else if (id === 'stream-stats') {
+                            var interval = parseInt(card.querySelector('#aspect_stream-stats_interval')?.value, 10) || 1000;
+                            options = { refreshIntervalMs: interval, showBufferHealth: true, showBitrate: true, showResolution: true };
+                        } else if (id === 'audio-boost') {
+                            var gain = parseFloat(card.querySelector('#aspect_audio-boost_gain')?.value) || 2.5;
+                            options = { maxGain: gain, defaultPreset: 'speech' };
+                        }
+
+                        config.Aspects.push({
+                            Id: id,
+                            Enabled: enabled,
+                            AdminOnly: adminOnly,
+                            CustomAnchorSlot: slot,
+                            OptionsJson: JSON.stringify(options)
+                        });
+                    });
+
+                    ApiClient.updatePluginConfiguration(pluginId, config).then(function (result) {
+                        if (window.Dashboard && Dashboard.hideLoadingMsg) {
+                            Dashboard.hideLoadingMsg();
+                        }
+                        if (window.Dashboard && Dashboard.alert) {
+                            Dashboard.alert({ message: 'PlayAdapt configuration saved successfully!' });
+                        }
+                        // Notify running web client of config update
+                        if (window.dispatchEvent) {
+                            window.dispatchEvent(new CustomEvent('playadapt:config-updated', { detail: config }));
+                        }
+                    }).catch(function (err) {
+                        console.error('[PlayAdaptConfig] Error saving configuration:', err);
+                        if (window.Dashboard && Dashboard.hideLoadingMsg) {
+                            Dashboard.hideLoadingMsg();
+                        }
+                    });
+                });
+            }
+
+            var view = document.querySelector('#playAdaptConfigPage');
+            if (view) {
+                view.addEventListener('viewshow', function () {
+                    loadConfiguration(view);
+                });
+
+                var form = view.querySelector('#playAdaptConfigForm');
+                if (form) {
+                    form.addEventListener('submit', function (e) {
+                        e.preventDefault();
+                        saveConfiguration(view);
+                        return false;
+                    });
+                }
+
+                var btnRefresh = view.querySelector('#btnRefreshDiagnostics');
+                if (btnRefresh) {
+                    btnRefresh.addEventListener('click', function () {
+                        updateDiagnostics();
+                    });
+                }
+            }
+        })();
+    </script>
+</div>

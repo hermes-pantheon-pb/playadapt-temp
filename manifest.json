@@ -1,0 +1,20 @@
+[
+  {
+    "category": "General",
+    "guid": "f47a61d3-63d1-4475-8025-a134fa96328a",
+    "name": "PlayAdapt",
+    "description": "Theme-adaptive player enhancement engine for Jellyfin official client with zero disk footprint.",
+    "owner": "Antigravity",
+    "overview": "PlayAdapt dynamically inspects any active Jellyfin theme, anchoring custom player features seamlessly into place with native styling, geometry, and glassmorphism.",
+    "versions": [
+      {
+        "version": "1.0.0.0",
+        "targetAbi": "10.9.0.0",
+        "sourceUrl": "https://raw.githubusercontent.com/hermes-pantheon-pb/playadapt-temp/main/jellyfin-plugin-playadapt.zip",
+        "checksum": "9083e3c268014f529be961617a650490",
+        "changelog": "Initial Release: Theme-Adaptive Player Engine with real-time theme inspection, spatial layout resolver, native component factory, admin configuration dashboard, and showcase aspects (playback speed, clean frame screenshot, stream stats HUD, and dialogue audio boost).",
+        "timestamp": "2026-10-05T12:00:00Z"
+      }
+    ]
+  }
+]
