@@ -29,7 +29,7 @@ export class SecondarySubtitleAspect implements PlayerAspect {
         description: 'Isolated secondary subtitle track for language learning with pure clear text and zero primary subtitle interference.',
         category: 'subtitles',
         defaultEnabled: true,
-        defaultSlot: AnchorSlot.SecondaryControlsStart
+        defaultSlot: AnchorSlot.AfterSubtitles
     };
 
     private button: HTMLButtonElement | null = null;
@@ -106,9 +106,11 @@ export class SecondarySubtitleAspect implements PlayerAspect {
         this.cleanup();
 
         // 1. Create themed toolbar button for secondary subtitle access
+        // Distinct translate icon and '2' badge immediately after primary subtitle button
         this.button = context.factory.createThemedButton({
             id: 'playadapt-btn-secondary-sub',
-            icon: 'subtitles',
+            icon: 'translate',
+            badge: '2',
             tooltip: 'Secondary Subtitle (Dual Subs)',
             active: this.prefs.masterEnabled,
             onClick: () => {
@@ -120,8 +122,9 @@ export class SecondarySubtitleAspect implements PlayerAspect {
             this.button.classList.add('playadapt-btn-active');
         }
 
+        const slot = context.slotOverride || this.metadata.defaultSlot || AnchorSlot.AfterSubtitles;
         this.unmountButton = context.layout.attachToSlot({
-            slot: AnchorSlot.SecondaryControlsStart,
+            slot,
             element: this.button
         });
 

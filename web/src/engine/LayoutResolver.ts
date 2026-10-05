@@ -103,6 +103,7 @@ export class LayoutResolver {
             case AnchorSlot.PlaybackControlsRight:
             case AnchorSlot.SecondaryControlsStart:
             case AnchorSlot.SecondaryControlsEnd:
+            case AnchorSlot.AfterSubtitles:
                 return (
                     root.querySelector('.videoOsdBottom .buttons') as HTMLElement ||
                     root.querySelector('.osdControls .buttons') as HTMLElement ||
@@ -184,12 +185,31 @@ export class LayoutResolver {
             }
 
             case AnchorSlot.SecondaryControlsStart: {
-                // Place before subtitles / audio / volume
-                const ref = container.querySelector('.btnSubtitles, .btnAudio, .volumeButtons, .btnUserRating');
+                // Place before user rating / subtitles / audio / volume
+                const ref = container.querySelector('.btnUserRating, .btnSubtitles, .btnAudio, .volumeButtons');
                 if (ref) {
                     container.insertBefore(element, ref);
                 } else {
                     container.appendChild(element);
+                }
+                break;
+            }
+
+            case AnchorSlot.AfterSubtitles: {
+                // Place immediately adjacent / after the primary subtitle track button
+                const btnSub = container.querySelector('.btnSubtitles');
+                if (btnSub && btnSub.nextSibling) {
+                    container.insertBefore(element, btnSub.nextSibling);
+                } else if (btnSub) {
+                    container.appendChild(element);
+                } else {
+                    // Fallback: place before audio track or settings
+                    const fallback = container.querySelector('.btnAudio, .volumeButtons, .btnVideoOsdSettings');
+                    if (fallback) {
+                        container.insertBefore(element, fallback);
+                    } else {
+                        container.appendChild(element);
+                    }
                 }
                 break;
             }

@@ -8,6 +8,14 @@
     "overview": "PlayAdapt dynamically inspects any active Jellyfin theme, anchoring custom player features seamlessly into place with native styling, geometry, and glassmorphism.",
     "versions": [
       {
+        "version": "1.0.5.0",
+        "targetAbi": "10.9.0.0",
+        "sourceUrl": "https://raw.githubusercontent.com/hermes-pantheon-pb/playadapt-temp/main/jellyfin-plugin-playadapt.zip",
+        "checksum": "39dd7876771d5481e21157e8cd502187",
+        "changelog": "v1.0.5.0: Enhanced secondary subtitle button distinction & layout: Added AnchorSlot.AfterSubtitles to position secondary subtitles directly adjacent to the primary subtitle button (eliminating favorite button separation); Added 'translate' icon with a distinct '2' corner badge and theme-reactive active lighting for unmistakable visual distinction; Added badge support to ComponentFactory.",
+        "timestamp": "2026-10-05T19:55:00Z"
+      },
+      {
         "version": "1.0.4.0",
         "targetAbi": "10.9.0.0",
         "sourceUrl": "https://raw.githubusercontent.com/hermes-pantheon-pb/playadapt-temp/main/jellyfin-plugin-playadapt.zip",

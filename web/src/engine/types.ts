@@ -26,6 +26,7 @@ export enum AnchorSlot {
     PlaybackControlsRight = 'PlaybackControlsRight',
     SecondaryControlsStart = 'SecondaryControlsStart',
     SecondaryControlsEnd = 'SecondaryControlsEnd',
+    AfterSubtitles = 'AfterSubtitles',
     TimelinePrefix = 'TimelinePrefix',
     TimelineSuffix = 'TimelineSuffix',
     TimelineAbove = 'TimelineAbove',
@@ -53,6 +54,8 @@ export interface ThemedButtonOptions {
     id: string;
     icon: string;
     label?: string;
+    badge?: string;
+    badgeClass?: string;
     tooltip?: string;
     className?: string;
     active?: boolean;

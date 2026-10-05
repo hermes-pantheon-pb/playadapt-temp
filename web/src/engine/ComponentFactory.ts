@@ -48,6 +48,13 @@ export class ComponentFactory {
             btn.appendChild(labelSpan);
         }
 
+        if (options.badge) {
+            const badgeSpan = document.createElement('span');
+            badgeSpan.className = `playadapt-btn-badge ${options.badgeClass || ''}`;
+            badgeSpan.textContent = options.badge;
+            btn.appendChild(badgeSpan);
+        }
+
         if (options.onClick) {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
