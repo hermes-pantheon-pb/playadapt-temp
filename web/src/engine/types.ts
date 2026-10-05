@@ -70,7 +70,7 @@ export interface MenuItemOption {
 export interface ThemedMenuOptions {
     id: string;
     title?: string;
-    items: MenuItemOption[];
+    items: MenuItemOption[] | (() => MenuItemOption[]);
     anchorElement?: HTMLElement;
     customContent?: HTMLElement;
     onClose?: () => void;

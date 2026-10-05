@@ -11,7 +11,7 @@
         "version": "1.0.0.0",
         "targetAbi": "10.9.0.0",
         "sourceUrl": "https://raw.githubusercontent.com/hermes-pantheon-pb/playadapt-temp/main/jellyfin-plugin-playadapt.zip",
-        "checksum": "9083e3c268014f529be961617a650490",
+        "checksum": "dec493a42bfacd3b6fd9fb8e57950eac",
         "changelog": "Initial Release: Theme-Adaptive Player Engine with real-time theme inspection, spatial layout resolver, native component factory, admin configuration dashboard, and showcase aspects (playback speed, clean frame screenshot, stream stats HUD, and dialogue audio boost).",
         "timestamp": "2026-10-05T12:00:00Z"
       }

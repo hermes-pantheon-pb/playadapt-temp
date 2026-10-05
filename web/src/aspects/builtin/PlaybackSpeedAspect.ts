@@ -60,21 +60,22 @@ export class PlaybackSpeedAspect implements PlayerAspect {
             }
         });
 
-        // 2. Create themed popup sheet
-        const menuItems = presets.map((rate) => ({
-            id: `speed_${rate}`,
-            label: `${rate}x Speed`,
-            selected: Math.abs(currentRate - rate) < 0.05,
-            onClick: () => {
-                context.player.setPlaybackRate(rate);
-                this.updateButtonLabel(rate);
-            }
-        }));
-
+        // 2. Create themed popup sheet with dynamic selection
         this.menuHandle = context.factory.createThemedMenu({
             id: 'playadapt-speed-menu',
             title: 'Playback Speed',
-            items: menuItems,
+            items: () => {
+                const activeRate = context.player.getPlaybackRate();
+                return presets.map((rate) => ({
+                    id: `speed_${rate}`,
+                    label: `${rate}x Speed`,
+                    selected: Math.abs(activeRate - rate) < 0.05,
+                    onClick: () => {
+                        context.player.setPlaybackRate(rate);
+                        this.updateButtonLabel(rate);
+                    }
+                }));
+            },
             anchorElement: this.button
         });
 

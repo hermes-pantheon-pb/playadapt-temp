@@ -71,11 +71,13 @@ export class QuickScreenshotAspect implements PlayerAspect {
             const filename = `jellyfin_frame_${timestamp}s.${ext}`;
 
             // 1. Copy to clipboard if supported
+            let copied = false;
             if (navigator.clipboard && (window as any).ClipboardItem && format === 'image/png') {
                 try {
                     await navigator.clipboard.write([
                         new ClipboardItem({ 'image/png': result.blob })
                     ]);
+                    copied = true;
                 } catch (e) {
                     console.debug('[PlayAdapt] Clipboard write skipped:', e);
                 }
@@ -89,7 +91,10 @@ export class QuickScreenshotAspect implements PlayerAspect {
             a.click();
             document.body.removeChild(a);
 
-            // 3. Briefly show check icon on button
+            // 3. Inform user with toast
+            context.factory.showToast(copied ? '📸 Screenshot saved & copied to clipboard!' : '📸 Screenshot saved!');
+
+            // 4. Briefly show check icon on button
             if (this.button) {
                 const icon = this.button.querySelector('.material-icons');
                 if (icon) {
@@ -100,8 +105,14 @@ export class QuickScreenshotAspect implements PlayerAspect {
                     }, 1200);
                 }
             }
-        } catch (err) {
+        } catch (err: any) {
             console.error('[PlayAdapt] Error capturing screenshot:', err);
+            const isCors = err?.name === 'SecurityError' || String(err).includes('tainted') || String(err).includes('insecure');
+            context.factory.showToast(
+                isCors
+                    ? '⚠️ Direct frame capture restricted by stream CORS policy'
+                    : '⚠️ Screenshot failed. Video stream may not be active.'
+            );
         }
     }
 

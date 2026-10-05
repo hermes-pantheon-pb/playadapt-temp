@@ -265,105 +265,103 @@ export class MediaInfoTagsAspect implements PlayerAspect {
             this.menuHandle = null;
         }
 
-        const menuItems = [
-            {
-                id: 'toggle_bitrate',
-                label: 'Realtime Bitrate Tag',
-                icon: 'speed',
-                selected: this.userPrefs.showBitrate,
-                onClick: () => {
-                    this.userPrefs.showBitrate = !this.userPrefs.showBitrate;
-                    this.saveUserPreferences();
-                    this.updateTags(context);
-                }
-            },
-            {
-                id: 'toggle_codec',
-                label: 'Video Codec & Resolution',
-                icon: 'movie',
-                selected: this.userPrefs.showCodec,
-                onClick: () => {
-                    this.userPrefs.showCodec = !this.userPrefs.showCodec;
-                    this.saveUserPreferences();
-                    this.updateTags(context);
-                }
-            },
-            {
-                id: 'toggle_hdr',
-                label: 'HDR & Special Flags',
-                icon: 'hdr_on',
-                selected: this.userPrefs.showHdr,
-                onClick: () => {
-                    this.userPrefs.showHdr = !this.userPrefs.showHdr;
-                    this.saveUserPreferences();
-                    this.updateTags(context);
-                }
-            },
-            {
-                id: 'toggle_audio',
-                label: 'Audio Codec & Channels',
-                icon: 'audiotrack',
-                selected: this.userPrefs.showAudio,
-                onClick: () => {
-                    this.userPrefs.showAudio = !this.userPrefs.showAudio;
-                    this.saveUserPreferences();
-                    this.updateTags(context);
-                }
-            },
-            {
-                id: 'toggle_method',
-                label: 'Playback Method (Direct/Transcode)',
-                icon: 'stream',
-                selected: this.userPrefs.showPlaybackMethod,
-                onClick: () => {
-                    this.userPrefs.showPlaybackMethod = !this.userPrefs.showPlaybackMethod;
-                    this.saveUserPreferences();
-                    this.updateTags(context);
-                }
-            },
-            {
-                id: 'style_cycle',
-                label: `Style: ${this.userPrefs.style === 'glass-pills' ? 'Frosted Glass Pills' : this.userPrefs.style === 'glow-badges' ? 'Glowing Badges' : 'Compact Minimal'}`,
-                icon: 'palette',
-                badge: 'Switch',
-                onClick: () => {
-                    if (this.userPrefs.style === 'glass-pills') {
-                        this.userPrefs.style = 'glow-badges';
-                    } else if (this.userPrefs.style === 'glow-badges') {
-                        this.userPrefs.style = 'compact-minimal';
-                    } else {
-                        this.userPrefs.style = 'glass-pills';
-                    }
-                    this.saveUserPreferences();
-                    if (this.dockContainer) {
-                        this.dockContainer.className = `playadapt-tags-dock playadapt-sync-osd playadapt-style-${this.userPrefs.style}`;
-                    }
-                    this.updateTags(context);
-                }
-            },
-            {
-                id: 'unit_cycle',
-                label: `Bitrate Unit: ${this.userPrefs.bitrateUnit}`,
-                icon: 'straighten',
-                badge: 'Switch',
-                onClick: () => {
-                    if (this.userPrefs.bitrateUnit === 'Mbps') {
-                        this.userPrefs.bitrateUnit = 'MB/s';
-                    } else if (this.userPrefs.bitrateUnit === 'MB/s') {
-                        this.userPrefs.bitrateUnit = 'Kbps';
-                    } else {
-                        this.userPrefs.bitrateUnit = 'Mbps';
-                    }
-                    this.saveUserPreferences();
-                    this.updateTags(context);
-                }
-            }
-        ];
-
         this.menuHandle = context.factory.createThemedMenu({
             id: 'playadapt-media-tags-menu',
             title: 'Media Tags Preferences',
-            items: menuItems,
+            items: () => [
+                {
+                    id: 'toggle_bitrate',
+                    label: 'Realtime Bitrate Tag',
+                    icon: 'speed',
+                    selected: this.userPrefs.showBitrate,
+                    onClick: () => {
+                        this.userPrefs.showBitrate = !this.userPrefs.showBitrate;
+                        this.saveUserPreferences();
+                        this.updateTags(context);
+                    }
+                },
+                {
+                    id: 'toggle_codec',
+                    label: 'Video Codec & Resolution',
+                    icon: 'movie',
+                    selected: this.userPrefs.showCodec,
+                    onClick: () => {
+                        this.userPrefs.showCodec = !this.userPrefs.showCodec;
+                        this.saveUserPreferences();
+                        this.updateTags(context);
+                    }
+                },
+                {
+                    id: 'toggle_hdr',
+                    label: 'HDR & Special Flags',
+                    icon: 'hdr_on',
+                    selected: this.userPrefs.showHdr,
+                    onClick: () => {
+                        this.userPrefs.showHdr = !this.userPrefs.showHdr;
+                        this.saveUserPreferences();
+                        this.updateTags(context);
+                    }
+                },
+                {
+                    id: 'toggle_audio',
+                    label: 'Audio Codec & Channels',
+                    icon: 'audiotrack',
+                    selected: this.userPrefs.showAudio,
+                    onClick: () => {
+                        this.userPrefs.showAudio = !this.userPrefs.showAudio;
+                        this.saveUserPreferences();
+                        this.updateTags(context);
+                    }
+                },
+                {
+                    id: 'toggle_method',
+                    label: 'Playback Method (Direct/Transcode)',
+                    icon: 'stream',
+                    selected: this.userPrefs.showPlaybackMethod,
+                    onClick: () => {
+                        this.userPrefs.showPlaybackMethod = !this.userPrefs.showPlaybackMethod;
+                        this.saveUserPreferences();
+                        this.updateTags(context);
+                    }
+                },
+                {
+                    id: 'style_cycle',
+                    label: `Style: ${this.userPrefs.style === 'glass-pills' ? 'Frosted Glass Pills' : this.userPrefs.style === 'glow-badges' ? 'Glowing Badges' : 'Compact Minimal'}`,
+                    icon: 'palette',
+                    badge: 'Switch',
+                    onClick: () => {
+                        if (this.userPrefs.style === 'glass-pills') {
+                            this.userPrefs.style = 'glow-badges';
+                        } else if (this.userPrefs.style === 'glow-badges') {
+                            this.userPrefs.style = 'compact-minimal';
+                        } else {
+                            this.userPrefs.style = 'glass-pills';
+                        }
+                        this.saveUserPreferences();
+                        if (this.dockContainer) {
+                            this.dockContainer.className = `playadapt-tags-dock playadapt-sync-osd playadapt-style-${this.userPrefs.style}`;
+                        }
+                        this.updateTags(context);
+                    }
+                },
+                {
+                    id: 'unit_cycle',
+                    label: `Bitrate Unit: ${this.userPrefs.bitrateUnit}`,
+                    icon: 'straighten',
+                    badge: 'Switch',
+                    onClick: () => {
+                        if (this.userPrefs.bitrateUnit === 'Mbps') {
+                            this.userPrefs.bitrateUnit = 'MB/s';
+                        } else if (this.userPrefs.bitrateUnit === 'MB/s') {
+                            this.userPrefs.bitrateUnit = 'Kbps';
+                        } else {
+                            this.userPrefs.bitrateUnit = 'Mbps';
+                        }
+                        this.saveUserPreferences();
+                        this.updateTags(context);
+                    }
+                }
+            ],
             anchorElement: this.dockContainer || undefined
         });
 

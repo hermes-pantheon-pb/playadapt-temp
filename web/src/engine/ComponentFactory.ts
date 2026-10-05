@@ -76,35 +76,38 @@ export class ComponentFactory {
 
         const listEl = document.createElement('div');
         listEl.className = 'playadapt-menu-list';
-
-        options.items.forEach(item => {
-            const itemBtn = document.createElement('button');
-            itemBtn.type = 'button';
-            itemBtn.className = `playadapt-menu-item ${item.selected ? 'playadapt-menu-item-selected' : ''}`;
-
-            let itemHtml = '';
-            if (item.icon) {
-                itemHtml += `<span class="material-icons playadapt-menu-item-icon">${item.icon}</span>`;
-            }
-            itemHtml += `<span class="playadapt-menu-item-text">${item.label}</span>`;
-            if (item.selected) {
-                itemHtml += `<span class="material-icons playadapt-menu-item-check">check</span>`;
-            }
-            if (item.badge) {
-                itemHtml += `<span class="playadapt-badge">${item.badge}</span>`;
-            }
-
-            itemBtn.innerHTML = itemHtml;
-            itemBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                item.onClick();
-                close();
-            });
-
-            listEl.appendChild(itemBtn);
-        });
-
         menu.appendChild(listEl);
+
+        const renderItems = () => {
+            listEl.innerHTML = '';
+            const items = typeof options.items === 'function' ? options.items() : options.items;
+            items.forEach(item => {
+                const itemBtn = document.createElement('button');
+                itemBtn.type = 'button';
+                itemBtn.className = `playadapt-menu-item ${item.selected ? 'playadapt-menu-item-selected' : ''}`;
+
+                let itemHtml = '';
+                if (item.icon) {
+                    itemHtml += `<span class="material-icons playadapt-menu-item-icon">${item.icon}</span>`;
+                }
+                itemHtml += `<span class="playadapt-menu-item-text">${item.label}</span>`;
+                if (item.selected) {
+                    itemHtml += `<span class="material-icons playadapt-menu-item-check">check</span>`;
+                }
+                if (item.badge) {
+                    itemHtml += `<span class="playadapt-badge">${item.badge}</span>`;
+                }
+
+                itemBtn.innerHTML = itemHtml;
+                itemBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    item.onClick();
+                    close();
+                });
+
+                listEl.appendChild(itemBtn);
+            });
+        };
 
         if (options.customContent) {
             menu.appendChild(options.customContent);
@@ -115,17 +118,31 @@ export class ComponentFactory {
         const positionMenu = () => {
             if (!options.anchorElement) {
                 menu.style.bottom = '90px';
+                menu.style.top = 'auto';
                 menu.style.right = '24px';
+                menu.style.maxHeight = 'calc(100vh - 120px)';
                 return;
             }
 
             const rect = options.anchorElement.getBoundingClientRect();
-            const menuWidth = 220;
+            const menuWidth = Math.min(260, window.innerWidth - 32);
             let left = rect.left + (rect.width / 2) - (menuWidth / 2);
             left = Math.max(16, Math.min(left, window.innerWidth - menuWidth - 16));
 
             menu.style.left = `${left}px`;
-            menu.style.bottom = `${window.innerHeight - rect.top + 12}px`;
+            menu.style.right = 'auto';
+
+            // Smart vertical positioning: if anchor is in top half of screen, open DOWNWARDS
+            const isTopHalf = rect.top < (window.innerHeight / 2);
+            if (isTopHalf) {
+                menu.style.top = `${rect.bottom + 8}px`;
+                menu.style.bottom = 'auto';
+                menu.style.maxHeight = `${Math.max(120, window.innerHeight - rect.bottom - 24)}px`;
+            } else {
+                menu.style.bottom = `${window.innerHeight - rect.top + 8}px`;
+                menu.style.top = 'auto';
+                menu.style.maxHeight = `${Math.max(120, rect.top - 24)}px`;
+            }
         };
 
         const onDocumentClick = (e: MouseEvent) => {
@@ -141,8 +158,9 @@ export class ComponentFactory {
         };
 
         const open = () => {
-            positionMenu();
+            renderItems();
             menu.style.display = 'block';
+            positionMenu();
             menu.classList.add('playadapt-menu-open');
             document.addEventListener('click', onDocumentClick);
             document.addEventListener('keydown', onKeyDown);
@@ -268,5 +286,30 @@ export class ComponentFactory {
         });
 
         return { element: backdrop, open, close };
+    }
+
+    /**
+     * Shows a lightweight, non-intrusive in-player toast notification.
+     */
+    public showToast(message: string, durationMs: number = 2400): void {
+        const toast = document.createElement('div');
+        toast.className = 'playadapt-toast playadapt-glass-surface';
+        toast.textContent = message;
+        document.body.appendChild(toast);
+
+        // Animate in
+        requestAnimationFrame(() => {
+            toast.classList.add('playadapt-toast-visible');
+        });
+
+        // Animate out & remove
+        setTimeout(() => {
+            toast.classList.remove('playadapt-toast-visible');
+            setTimeout(() => {
+                if (toast.parentElement) {
+                    toast.parentElement.removeChild(toast);
+                }
+            }, 300);
+        }, durationMs);
     }
 }
