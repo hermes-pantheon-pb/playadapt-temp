@@ -143,7 +143,7 @@ import { AudioBoostAspect } from './aspects/builtin/AudioBoostAspect';
 
     // Expose public developer API for runtime inspection and custom aspect registration
     (window as any).PlayAdapt = {
-        version: '1.0.0',
+        version: '1.0.1',
         ThemeInspector: themeInspector,
         LayoutResolver: layoutResolver,
         ComponentFactory: componentFactory,

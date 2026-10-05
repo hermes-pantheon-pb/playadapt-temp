@@ -8,6 +8,14 @@
     "overview": "PlayAdapt dynamically inspects any active Jellyfin theme, anchoring custom player features seamlessly into place with native styling, geometry, and glassmorphism.",
     "versions": [
       {
+        "version": "1.0.1.0",
+        "targetAbi": "10.9.0.0",
+        "sourceUrl": "https://raw.githubusercontent.com/hermes-pantheon-pb/playadapt-temp/main/jellyfin-plugin-playadapt.zip",
+        "checksum": "26d8a61fa7477da1e16757a807ea65d9",
+        "changelog": "v1.0.1.0: Real-time network throughput bitrate monitor; Smart downward menu positioning for top HUD; Accurate playback speed menu dynamic checkmarks; Direct Events & API stream codec discovery (OPUS, FLAC, TrueHD Atmos, AV1, HEVC); Toast notifications for frame capture.",
+        "timestamp": "2026-10-05T18:20:00Z"
+      },
+      {
         "version": "1.0.0.0",
         "targetAbi": "10.9.0.0",
         "sourceUrl": "https://raw.githubusercontent.com/hermes-pantheon-pb/playadapt-temp/main/jellyfin-plugin-playadapt.zip",
