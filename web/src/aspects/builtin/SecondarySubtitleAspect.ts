@@ -42,15 +42,19 @@ export class SecondarySubtitleAspect implements PlayerAspect {
     private prefs: SecondarySubtitlePreferences;
     private menuHandle: { element: HTMLElement; open: () => void; close: () => void } | null = null;
 
+    private eventsBound: boolean = false;
+
     constructor() {
         this.prefs = this.loadPreferences();
     }
 
     public init(context: AspectContext): void {
+        this.bindPlayerEvents(context);
         this.render(context);
     }
 
     public onPlayerMount(context: AspectContext): void {
+        this.bindPlayerEvents(context);
         this.render(context);
     }
 
@@ -64,6 +68,37 @@ export class SecondarySubtitleAspect implements PlayerAspect {
 
     public destroy(): void {
         this.cleanup();
+    }
+
+    private bindPlayerEvents(context: AspectContext): void {
+        if (this.eventsBound) return;
+        this.eventsBound = true;
+
+        const onMediaUpdate = () => {
+            if (!this.prefs.masterEnabled) return;
+
+            const tracks = context.player.getSubtitleTracks();
+            const primaryIdx = context.player.getPrimarySubtitleIndex();
+
+            // If selected track doesn't exist on this media, auto-resolve
+            let targetTrack = tracks.find(t => t.index === this.prefs.selectedTrackIndex);
+            if (!targetTrack && tracks.length > 0) {
+                targetTrack = tracks.find(t => t.index !== primaryIdx) || tracks[0];
+                this.prefs.selectedTrackIndex = targetTrack.index;
+                this.savePreferences();
+            }
+
+            if (targetTrack) {
+                this.mountSubtitleDisplay(context);
+                this.loadTrackCues(context, targetTrack.index);
+            }
+        };
+
+        context.player.on('playbackstart', onMediaUpdate);
+        context.player.on('mediastreamschange', onMediaUpdate);
+        context.player.on('playbackstop', () => {
+            this.teardownSubtitleDisplay();
+        });
     }
 
     private loadPreferences(): SecondarySubtitlePreferences {
@@ -130,7 +165,21 @@ export class SecondarySubtitleAspect implements PlayerAspect {
 
         // 2. Strict Master Toggle Check:
         // If master toggle is not enabled, STAY AWAY COMPLETELY.
-        if (!this.prefs.masterEnabled || this.prefs.selectedTrackIndex === null) {
+        if (!this.prefs.masterEnabled) {
+            return;
+        }
+
+        const availableTracks = context.player.getSubtitleTracks();
+        const primaryIdx = context.player.getPrimarySubtitleIndex();
+
+        // Auto-select valid track if none selected or if previous index is invalid for current media
+        if ((this.prefs.selectedTrackIndex === null || !availableTracks.some(t => t.index === this.prefs.selectedTrackIndex)) && availableTracks.length > 0) {
+            const candidate = availableTracks.find(t => t.index !== primaryIdx) || availableTracks[0];
+            this.prefs.selectedTrackIndex = candidate.index;
+            this.savePreferences();
+        }
+
+        if (this.prefs.selectedTrackIndex === null) {
             return;
         }
 

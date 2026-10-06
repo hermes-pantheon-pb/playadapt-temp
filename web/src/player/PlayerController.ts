@@ -312,18 +312,88 @@ export class PlayerController {
     }
 
     public getCurrentTime(): number {
+        const pbManager = this.getPlaybackManager();
+        const player = this.activePlayer || (pbManager?.getCurrentPlayer ? pbManager.getCurrentPlayer() : null);
+
+        // 1. Query playbackManager.getCurrentTicks(player) (highest precision ticks in Jellyfin)
+        if (pbManager && typeof pbManager.getCurrentTicks === 'function') {
+            try {
+                const ticks = pbManager.getCurrentTicks(player);
+                if (typeof ticks === 'number' && !isNaN(ticks) && ticks > 0) {
+                    return ticks / 10000000;
+                }
+            } catch (e) {}
+        }
+
+        // 2. Query playbackManager.currentTime(player) (returns milliseconds in Jellyfin)
+        if (pbManager && typeof pbManager.currentTime === 'function') {
+            try {
+                const ms = pbManager.currentTime(player);
+                if (typeof ms === 'number' && !isNaN(ms) && ms > 0) {
+                    return ms / 1000;
+                }
+            } catch (e) {}
+        }
+
+        // 3. Query player.currentTime() (Desktop 2.0 / MPV player instance)
+        if (player && typeof player.currentTime === 'function') {
+            try {
+                const t = player.currentTime();
+                if (typeof t === 'number' && !isNaN(t) && t > 0) {
+                    return t > 1000 ? t / 1000 : t;
+                }
+            } catch (e) {}
+        }
+
+        // 4. Fallback to HTML5 video element if available
         const v = this.getVideo();
-        return v ? v.currentTime : 0;
+        if (v && typeof v.currentTime === 'number' && !isNaN(v.currentTime)) {
+            return v.currentTime;
+        }
+
+        return 0;
     }
 
     public getDuration(): number {
+        const pbManager = this.getPlaybackManager();
+        const player = this.activePlayer || (pbManager?.getCurrentPlayer ? pbManager.getCurrentPlayer() : null);
+
+        if (pbManager && typeof pbManager.duration === 'function') {
+            try {
+                const ms = pbManager.duration(player);
+                if (typeof ms === 'number' && !isNaN(ms) && ms > 0) return ms / 1000;
+            } catch (e) {}
+        }
+
+        if (player && typeof player.duration === 'function') {
+            try {
+                const d = player.duration();
+                if (typeof d === 'number' && !isNaN(d) && d > 0) return d > 1000 ? d / 1000 : d;
+            } catch (e) {}
+        }
+
         const v = this.getVideo();
         return v ? v.duration : 0;
     }
 
     public isPaused(): boolean {
+        const pbManager = this.getPlaybackManager();
+        const player = this.activePlayer || (pbManager?.getCurrentPlayer ? pbManager.getCurrentPlayer() : null);
+
+        if (pbManager && typeof pbManager.paused === 'function') {
+            try {
+                return pbManager.paused(player);
+            } catch (e) {}
+        }
+
+        if (player && typeof player.paused === 'function') {
+            try {
+                return player.paused();
+            } catch (e) {}
+        }
+
         const v = this.getVideo();
-        return v ? v.paused : true;
+        return v ? v.paused : false;
     }
 
     /**
@@ -339,6 +409,32 @@ export class PlayerController {
     }
 
     /**
+     * Resolves ApiClient across all desktop and web client injection environments.
+     */
+    public getApiClient(): any {
+        if ((window as any).ApiClient) return (window as any).ApiClient;
+        const sc = (window as any).ServerConnections;
+        if (sc) {
+            if (typeof sc.currentApiClient === 'function') {
+                const c = sc.currentApiClient();
+                if (c) return c;
+            }
+            const pbManager = this.getPlaybackManager();
+            const player = this.activePlayer || (pbManager?.getCurrentPlayer ? pbManager.getCurrentPlayer() : null);
+            const item = this.activeNowPlayingItem || (pbManager?.currentItem ? pbManager.currentItem(player) : null);
+            if (item?.ServerId && typeof sc.getApiClient === 'function') {
+                return sc.getApiClient(item.ServerId);
+            }
+        }
+        const cm = (window as any).connectionManager;
+        if (cm && typeof cm.currentApiClient === 'function') {
+            const c = cm.currentApiClient();
+            if (c) return c;
+        }
+        return null;
+    }
+
+    /**
      * Asynchronously queries the active session from Jellyfin ApiClient.
      */
     public async fetchActiveSession(): Promise<any> {
@@ -348,7 +444,7 @@ export class PlayerController {
         }
 
         try {
-            const apiClient = (window as any).ApiClient;
+            const apiClient = this.getApiClient();
             if (apiClient && typeof apiClient.getSessions === 'function') {
                 const deviceId = typeof apiClient.deviceId === 'function' ? apiClient.deviceId() : undefined;
                 const sessions = await apiClient.getSessions({ deviceId });
@@ -366,23 +462,57 @@ export class PlayerController {
 
     /**
      * Discovers all available subtitle tracks on the currently playing media item.
+     * Supports HTML5, MPV, Jellyfin Desktop 2.0, and remote cast players.
      */
     public getSubtitleTracks(): SubtitleTrackInfo[] {
         const pbManager = this.getPlaybackManager();
         const player = this.activePlayer || (pbManager?.getCurrentPlayer ? pbManager.getCurrentPlayer() : null);
 
-        let mediaStreams: any[] = [];
-        if (this.activeMediaSource?.MediaStreams?.length) {
-            mediaStreams = this.activeMediaSource.MediaStreams;
-        } else if (this.activeNowPlayingItem?.MediaStreams?.length) {
-            mediaStreams = this.activeNowPlayingItem.MediaStreams;
-        } else if (pbManager?.mediaStreams) {
+        let subStreams: any[] = [];
+
+        // 1. Query playbackManager's official subtitleTracks method
+        if (pbManager && typeof pbManager.subtitleTracks === 'function') {
             try {
-                mediaStreams = pbManager.mediaStreams(player) || [];
+                const tracks = pbManager.subtitleTracks(player);
+                if (tracks && tracks.length) {
+                    subStreams = tracks;
+                }
             } catch (e) {}
         }
 
-        const subStreams = mediaStreams.filter((s: any) => s.Type === 'Subtitle');
+        // 2. Query player directly if available
+        if (!subStreams.length && player && typeof player.subtitleTracks === 'function') {
+            try {
+                const tracks = player.subtitleTracks();
+                if (tracks && tracks.length) {
+                    subStreams = tracks;
+                }
+            } catch (e) {}
+        }
+
+        // 3. Query MediaStreams from mediaSource or nowPlayingItem
+        if (!subStreams.length) {
+            let mediaStreams: any[] = [];
+            const mediaSource = this.activeMediaSource
+                || (pbManager?.currentMediaSource ? pbManager.currentMediaSource(player) : null)
+                || player?._currentPlayOptions?.mediaSource;
+            const item = this.activeNowPlayingItem
+                || (pbManager?.currentItem ? pbManager.currentItem(player) : null)
+                || player?._currentPlayOptions?.item;
+
+            if (mediaSource?.MediaStreams?.length) {
+                mediaStreams = mediaSource.MediaStreams;
+            } else if (item?.MediaStreams?.length) {
+                mediaStreams = item.MediaStreams;
+            } else if (pbManager?.mediaStreams) {
+                try {
+                    mediaStreams = pbManager.mediaStreams(player) || [];
+                } catch (e) {}
+            }
+
+            subStreams = mediaStreams.filter((s: any) => s.Type === 'Subtitle');
+        }
+
         return subStreams.map((s: any) => ({
             index: typeof s.Index === 'number' ? s.Index : -1,
             language: s.Language,
@@ -408,11 +538,18 @@ export class PlayerController {
                 if (typeof idx === 'number') return idx;
             } catch (e) {}
         }
+        if (player?.getSubtitleStreamIndex) {
+            try {
+                const idx = player.getSubtitleStreamIndex();
+                if (typeof idx === 'number') return idx;
+            } catch (e) {}
+        }
         return -1;
     }
 
     /**
      * Fetches and parses subtitle cues for a secondary subtitle stream cleanly.
+     * Fully compatible with Jellyfin Desktop 2.0 (Qt6/MpvQt) and standalone web.
      * Converts to pure clear-text cues via SubtitleParser. Caches per track index.
      */
     public async fetchSubtitleCues(trackIndex: number): Promise<SubtitleCue[]> {
@@ -424,44 +561,89 @@ export class PlayerController {
         const track = tracks.find(t => t.index === trackIndex);
         if (!track) return [];
 
-        let url = track.deliveryUrl || '';
-        const apiClient = (window as any).ApiClient;
+        const pbManager = this.getPlaybackManager();
+        const player = this.activePlayer || (pbManager?.getCurrentPlayer ? pbManager.getCurrentPlayer() : null);
+        const apiClient = this.getApiClient();
 
-        if (!url && apiClient) {
-            const itemId = this.activeNowPlayingItem?.Id || this.activeMediaSource?.ItemId || this.activeSession?.NowPlayingItem?.Id;
-            const mediaSourceId = this.activeMediaSource?.Id;
+        // 1. Resolve raw subtitle endpoint URL
+        let rawUrl = track.deliveryUrl || '';
+
+        const item = this.activeNowPlayingItem
+            || (pbManager?.currentItem ? pbManager.currentItem(player) : null)
+            || player?._currentPlayOptions?.item;
+        const mediaSource = this.activeMediaSource
+            || (pbManager?.currentMediaSource ? pbManager.currentMediaSource(player) : null)
+            || player?._currentPlayOptions?.mediaSource;
+        const itemId = item?.Id || mediaSource?.ItemId || this.activeSession?.NowPlayingItem?.Id;
+        const mediaSourceId = mediaSource?.Id;
+
+        if (!rawUrl) {
             if (itemId && mediaSourceId) {
-                // Jellyfin's Stream.vtt endpoint automatically converts text/SRT/ASS to clean WebVTT
-                if (typeof apiClient.getUrl === 'function') {
-                    url = apiClient.getUrl(`Videos/${itemId}/${mediaSourceId}/Subtitles/${trackIndex}/Stream.vtt`);
-                } else if (typeof apiClient.serverAddress === 'function') {
-                    url = `${apiClient.serverAddress()}/Videos/${itemId}/${mediaSourceId}/Subtitles/${trackIndex}/Stream.vtt`;
-                }
+                rawUrl = `Videos/${itemId}/${mediaSourceId}/Subtitles/${trackIndex}/Stream.vtt`;
+            } else if (itemId) {
+                rawUrl = `Videos/${itemId}/Subtitles/${trackIndex}/Stream.vtt`;
             }
         }
 
-        if (!url) return [];
-
-        try {
-            const headers: Record<string, string> = {};
-            if (apiClient?.accessToken?.()) {
-                headers['X-Emby-Token'] = apiClient.accessToken();
-            }
-
-            const res = await fetch(url, { headers });
-            if (!res.ok) {
-                console.warn('[PlayAdapt] Failed to fetch secondary subtitle stream:', res.status);
-                return [];
-            }
-
-            const content = await res.text();
-            const cues = SubtitleParser.parse(content);
-            this.cachedSubtitleCues.set(trackIndex, cues);
-            return cues;
-        } catch (err) {
-            console.error('[PlayAdapt] Error loading subtitle track:', err);
+        if (!rawUrl) {
+            console.warn('[PlayAdapt] Could not construct subtitle delivery URL for track', trackIndex);
             return [];
         }
+
+        // 2. Ensure URL is fully qualified with server address and auth tokens
+        // Essential for Jellyfin Desktop 2.0 where origin is file:// or app://
+        const candidateUrls: string[] = [];
+        const qualify = (path: string): string => {
+            if (path.startsWith('http://') || path.startsWith('https://')) return path;
+            if (apiClient && typeof apiClient.getUrl === 'function') {
+                return apiClient.getUrl(path);
+            }
+            const serverAddr = apiClient?.serverAddress?.()
+                || (window as any).ServerConnections?.currentApiClient?.()?.serverAddress?.();
+            if (serverAddr) {
+                const base = serverAddr.replace(/\/+$/, '');
+                const clean = path.replace(/^\/+/, '');
+                return `${base}/${clean}`;
+            }
+            return path;
+        };
+
+        candidateUrls.push(qualify(rawUrl));
+
+        // Add fallback candidates if default endpoint fails
+        if (rawUrl.includes('/Stream.vtt')) {
+            candidateUrls.push(qualify(rawUrl.replace('/Stream.vtt', '/Stream')));
+        }
+        if (itemId && mediaSourceId && !rawUrl.includes(mediaSourceId)) {
+            candidateUrls.push(qualify(`Videos/${itemId}/${mediaSourceId}/Subtitles/${trackIndex}/Stream.vtt`));
+        }
+
+        const headers: Record<string, string> = {};
+        const token = apiClient?.accessToken?.()
+            || (window as any).ServerConnections?.currentApiClient?.()?.accessToken?.()
+            || (window as any).ApiClient?.accessToken?.();
+        if (token) {
+            headers['X-Emby-Token'] = token;
+        }
+
+        for (const url of candidateUrls) {
+            try {
+                const res = await fetch(url, { headers });
+                if (res.ok) {
+                    const content = await res.text();
+                    const cues = SubtitleParser.parse(content);
+                    if (cues.length > 0) {
+                        this.cachedSubtitleCues.set(trackIndex, cues);
+                        return cues;
+                    }
+                }
+            } catch (err) {
+                console.debug('[PlayAdapt] Candidate subtitle fetch error:', url, err);
+            }
+        }
+
+        console.warn('[PlayAdapt] Could not load subtitle cues for track', trackIndex);
+        return [];
     }
 
     /**

@@ -572,8 +572,8 @@
    ========================================================================== */
 
 .playadapt-secondary-sub {
-    position: absolute !important;
-    z-index: 1500 !important;
+    position: fixed !important;
+    z-index: 9999 !important;
     pointer-events: none !important;
     text-align: center;
     white-space: pre-wrap;
